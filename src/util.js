@@ -1,5 +1,3 @@
-import Immutable from 'immutable'
-
 function log (a) { console.log(a); return a }
 
 const fields = [

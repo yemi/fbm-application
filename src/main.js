@@ -2,21 +2,22 @@ import {run, Rx} from '@cycle/core'
 import {h, makeDOMDriver} from '@cycle/dom'
 import {makeHTTPDriver} from '@cycle/http'
 import {log, fields} from './util'
-import {fromJS, toJS, Map, List} from 'immutable'
-import {map, concat, replace, compose, match, prop} from 'ramda'
+import {keys, equals, any, map, reduce, merge, concat, append, replace, compose, match, prop, propEq, eqProps, path, assoc, assocPath} from 'ramda'
 
 const API_URL = 'http://private-a4658-helpinghandapplication.apiary-mock.com/'
 const ENDPOINT = 'application'
 
 // INTENT
 
-const eventToFieldInput = ev => Map({ key: ev.target.id, val: ev.target.value })
+const eventToFieldInput = ev => ({ key: ev.target.id, val: ev.target.value })
 
 const hashChangeToRoute = compose(replace('#', ''), prop('0'), match(/\#[^\#]*$/), prop('newURL'))
 
-const resToState = res => defaultState
-  .set('steps', fromJS(res.body.steps))
-  .set('total-steps', res.body['total-steps'].toString())
+const resToState = res => compose(
+  assoc('total-steps', keys(res.body.steps).length.toString()),
+  assoc('steps', path(['body', 'steps'], res)),
+  assoc('loading', false)
+)(defaultState)
 
 const intent = (DOM, HTTP, hashChange, initialHash) => ({
   fieldInput$: map(eventToFieldInput, DOM.select('input').events('input')),
@@ -27,11 +28,11 @@ const intent = (DOM, HTTP, hashChange, initialHash) => ({
 
 // MODEL
 
-const defaultState = fromJS({
-  'current-step': 'company-basics',
+const defaultState = {
+  'loading': true,
   'total-steps': null,
   'steps': {}
-})
+}
 
 const routes = [
   'company-basics',
@@ -40,34 +41,35 @@ const routes = [
 ]
 
 const updateField = fieldInput => (fields, field) => {
-  if (field.get('key') === fieldInput.get('key')) {
-    return fields.push(field.set('val', fieldInput.get('val')))
+  if (eqProps('key', field, fieldInput)) {
+    const updatedField = assoc('val', prop('val', fieldInput), field)
+    return append(updatedField, fields)
   } else {
-    return fields.push(field)
+    return append(field, fields)
   }
 }
 
-const setStep = (state, route) =>
-  routes.some(r => r === route) ? state.set('current-step', route) : state
-
 const Operations = {
   updateField: fieldInput => state => {
-    const fieldsPath = ['steps', state.get('current-step'), 'fields']
-    return state.setIn(fieldsPath, state.getIn(fieldsPath).reduce(updateField(fieldInput), List()))
+    const fieldsPath = ['steps', prop('current-step', state), 'fields']
+    const fields = path(fieldsPath, state)
+    return assocPath(fieldsPath, reduce(updateField(fieldInput), [], fields), state)
   },
-  setInitState: state => () => state
+  setInitState: newState => oldState => {
+    return merge(oldState, newState)
+  },
+  setStep: route => state =>
+    any(equals(route), routes) ? assoc('current-step', route, state) : state
 }
 
 const model = function (actions) {
-  const updateField$ = actions.fieldInput$.map(Operations.updateField)
-  const setInitState$ = actions.initState$.map(Operations.setInitState)
-  const allOperations$ = Rx.Observable.merge(updateField$, setInitState$)
-
-  const route$ = Rx.Observable.just('/').merge(actions.changeRoute$)
+  const updateField$ = map(Operations.updateField, actions.fieldInput$)
+  const setInitState$ = map(Operations.setInitState, actions.initState$)
+  const changeRoute$ = map(Operations.setStep, actions.changeRoute$)
+  const allOperations$ = Rx.Observable.merge(setInitState$, updateField$, changeRoute$)
 
   const state$ = allOperations$
     .scan((state, operation) => operation(state), defaultState)
-    .combineLatest(route$, setStep)
 
   return state$
 }
@@ -78,10 +80,10 @@ const renderFields = fields => {
   if (fields) {
     return fields.map(field =>
       h('div', [
-        h('label', field.get('name')), h('input', { type: 'text', 'id': field.get('key') }),
-        h('span', field.get('val'))
+        h('label', field.name), h('input', { type: 'text', value: field.val, id: field.key }),
+        h('span', field.val)
       ])
-    ).toJS()
+    )
   } else {
     return []
   }
@@ -90,14 +92,15 @@ const renderFields = fields => {
 const view = $state => $state
   .startWith(defaultState)
   .map(state => {
-    const fieldsPath = ['steps', state.get('current-step'), 'fields']
+    const fieldsPath = ['steps', state['current-step'], 'fields']
     return (
       h('div', [
-        h('div', renderFields(state.getIn(fieldsPath))),
+        h('div', renderFields(path(fieldsPath, state))),
         h('footer', [
           h('button', { className: 'back' }, 'Back'),
-          h('button', { className: 'continue' }, 'Save'),
-          h('span', state.get('total-steps'))
+          h('button', { className: 'continue' }, 'Continue'),
+          h('span', state['total-steps']),
+          state.loading ? h('div', 'Loooading') : null
         ])
       ])
     )
