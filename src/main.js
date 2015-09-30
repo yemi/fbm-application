@@ -1,8 +1,9 @@
 import {run, Rx} from '@cycle/core'
 import {h, makeDOMDriver} from '@cycle/dom'
 import {makeHTTPDriver} from '@cycle/http'
-import {log, fields} from './util'
-import {keys, equals, any, map, reduce, merge, concat, append, replace, compose, match, prop, propEq, eqProps, path, assoc, assocPath} from 'ramda'
+import {log} from './util'
+import {gte, toString, findIndex, equals, any, map, reduce, merge, concat, append, replace, compose, match, prop, propEq, eqProps, path, assoc, assocPath} from 'ramda'
+import {Maybe} from 'ramda-fantasy'
 
 const API_URL = 'http://private-a4658-helpinghandapplication.apiary-mock.com/'
 const ENDPOINT = 'application'
@@ -11,34 +12,31 @@ const ENDPOINT = 'application'
 
 const eventToFieldInput = ev => ({ key: ev.target.id, val: ev.target.value })
 
-const hashChangeToRoute = compose(replace('#', ''), prop('0'), match(/\#[^\#]*$/), prop('newURL'))
+const hashChangeToRoute = compose(replace('#', ''), prop(0), match(/\#[^\#]*$/), prop('newURL'))
 
 const resToState = res => compose(
-  assoc('total-steps', keys(res.body.steps).length.toString()),
-  assoc('steps', path(['body', 'steps'], res)),
-  assoc('loading', false)
+  assoc('totalSteps', toString(res.body.steps.length)),
+  assoc('steps', res.body.steps),
+  assoc('loading', false),
+  assoc('routes', map(prop('slug'), res.body.steps))
 )(defaultState)
 
 const intent = (DOM, HTTP, hashChange, initialHash) => ({
   fieldInput$: map(eventToFieldInput, DOM.select('input').events('input')),
   initState$: map(resToState, HTTP.mergeAll()),
-  changeRoute$: concat(map(replace('#', ''), initialHash),
-                       map(hashChangeToRoute, hashChange))
+  routeChange$: concat(map(replace('#', ''), initialHash),
+                       map(hashChangeToRoute, hashChange)),
+  postState$: DOM.select('.continue').events('click')
 })
 
 // MODEL
 
 const defaultState = {
   'loading': true,
-  'total-steps': null,
-  'steps': {}
+  'totalSteps': null,
+  'steps': [],
+  'routes': []
 }
-
-const routes = [
-  'company-basics',
-  'overview',
-  'elevator-pitch'
-]
 
 const updateField = fieldInput => (fields, field) => {
   if (eqProps('key', field, fieldInput)) {
@@ -51,22 +49,37 @@ const updateField = fieldInput => (fields, field) => {
 
 const Operations = {
   updateField: fieldInput => state => {
-    const fieldsPath = ['steps', prop('current-step', state), 'fields']
+    const fieldsPath = ['steps', state.currentStep, 'fields']
     const fields = path(fieldsPath, state)
     return assocPath(fieldsPath, reduce(updateField(fieldInput), [], fields), state)
   },
-  setInitState: newState => oldState => {
-    return merge(oldState, newState)
+
+  setInitState: newState => oldState => merge(oldState, newState),
+
+  setCurrentStep: route => state => {
+    if (any(equals(route), state.routes)) {
+      const step = findIndex(propEq('slug', route), state.steps)
+      return assoc('currentStep', step, state)
+    } else {
+      return state
+    }
   },
-  setStep: route => state =>
-    any(equals(route), routes) ? assoc('current-step', route, state) : state
+
+  postState: () => state =>
+    // compose()(state.steps)
+    state
 }
 
 const model = function (actions) {
   const updateField$ = map(Operations.updateField, actions.fieldInput$)
   const setInitState$ = map(Operations.setInitState, actions.initState$)
-  const changeRoute$ = map(Operations.setStep, actions.changeRoute$)
-  const allOperations$ = Rx.Observable.merge(setInitState$, updateField$, changeRoute$)
+  const routeChange$ = map(Operations.setCurrentStep, actions.routeChange$)
+  const initApp$ = setInitState$.withLatestFrom(routeChange$,
+    (setInitState, routeChange) => compose(routeChange, setInitState))
+  const postState$ = map(Operations.postState, actions.postState$)
+
+  const allOperations$ = Rx.Observable
+    .merge(updateField$, initApp$, routeChange$, postState$)
 
   const state$ = allOperations$
     .scan((state, operation) => operation(state), defaultState)
@@ -76,30 +89,48 @@ const model = function (actions) {
 
 // VIEW
 
-const renderFields = fields => {
-  if (fields) {
-    return fields.map(field =>
-      h('div', [
-        h('label', field.name), h('input', { type: 'text', value: field.val, id: field.key }),
-        h('span', field.val)
-      ])
-    )
-  } else {
-    return []
-  }
+const getLinks = state => {
+  // const prevStep = max(0, state.currentStep - 1)
+  // const nextStep = min(state.steps.length - 1, state.currentStep + 1)
+  // const prevLink = compose(map(prop('slug')), Maybe, nth(prevStep))(state.steps)
+  // const nextLink = compose(map(prop('slug')), Maybe, nth(nextStep))(state.steps)
+
+  // [{slug: 'company-basics'}, {slug: 'overview'}, {slug:'elevator-pitch'}]
+
+  const {cds, prevLink} = reduce(({prevStep,prevSlug}, step) => {
+    console.log(prevStep, prevSlug)
+    if (gte(prevStep, state.currentStep)) {
+      return { prevStep, prevSlug }
+    } else {
+      return { prevStep:++prevStep, prevSlug:step.slug }
+    }
+  }, { prevStep:-1, slug:'' }, state.steps)
+
+  console.log(prevLink)
+
+  return { prevLink:prevLink }
 }
+
+const renderFields = map(field =>
+  h('div', [
+    h('label', field.name), h('input', { type: 'text', value: field.val, id: field.key }),
+    h('span', field.val)
+  ]))
 
 const view = $state => $state
   .startWith(defaultState)
+  // .map(log)
   .map(state => {
-    const fieldsPath = ['steps', state['current-step'], 'fields']
+    const fieldsPath = ['steps', state.currentStep, 'fields']
+    const fields = Maybe(path(fieldsPath, state))
+    const {prevLink} = getLinks(state)
     return (
       h('div', [
-        h('div', renderFields(path(fieldsPath, state))),
+        h('div', Maybe.maybe([], renderFields, fields)),
         h('footer', [
-          h('button', { className: 'back' }, 'Back'),
+          h('button', { className: 'back', href: "#"}, 'Back'),
           h('button', { className: 'continue' }, 'Continue'),
-          h('span', state['total-steps']),
+          h('span', state['totalSteps']),
           state.loading ? h('div', 'Loooading') : null
         ])
       ])
