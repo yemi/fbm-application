@@ -1,6 +1,6 @@
-import {identity, adjust, max, min, nth, gte, toString, findIndex, equals, any, map, reduce, merge, concat, append, replace, compose, match, prop, propEq, eqProps, path, assoc, assocPath} from 'ramda'
+import {pick, adjust, findIndex, equals, any, map, reduce, merge, append, compose, prop, propEq, eqProps} from 'ramda'
 import {run, Rx} from '@cycle/core'
-import {log, httpResponseToState} from '../../util'
+import {log} from '../../util'
 
 const defaultState = {
   loading: true,
@@ -12,51 +12,56 @@ const defaultState = {
 
 const updateField = fieldInput => (fields, field) => {
   if (eqProps('key', field, fieldInput)) {
-    const updatedField = assoc('val', fieldInput.val, field)
-    return append(updatedField, fields)
+    return append({ ...field, val: fieldInput.val }, fields)
   } else {
     return append(field, fields)
   }
 }
 
 const updateFields = fieldInput => step =>
-  assoc('fields', reduce(updateField(fieldInput), [], step.fields), step)
+  ({ ...step, fields: reduce(updateField(fieldInput), [], step.fields) })
 
 const Operations = {
   updateField: fieldInput => state => {
     const updatedSteps = adjust(updateFields(fieldInput), state.currentStep, state.steps)
 
-    return assoc('steps', updatedSteps, state)
+    return { ...state, steps: updatedSteps }
   },
 
-  setInitState: res => oldState => {
-    const newState = httpResponseToState(res)
-    
-    return merge(oldState, newState)
-  },
+  setInitState: res => oldState => ({
+    ...oldState,
+    totalSteps: res.steps.length,
+    steps: res.steps,
+    loading: false,
+    routes: map(prop('slug'), res.steps)
+  }),
 
   setCurrentStep: route => state => {
     if (any(equals(route), state.routes)) {
-      const step = findIndex(propEq('slug', route), state.steps)
-      return assoc('currentStep', step, state)
+      const newStep = findIndex(propEq('slug', route), state.steps)
+
+      return { ...state, currentStep: newStep }
     } else {
       return state
     }
   },
 
-  postState: () => state => state
+  postState: () => state => {
+    console.log(map(pick(['slug', 'fields']), state.steps))
+
+    return state
+  }
 }
 
 const model = function (mainHTTPresponse$, route$, actions) {
   const updateField$ = map(Operations.updateField, actions.fieldInput$)
   const setInitState$ = map(Operations.setInitState, mainHTTPresponse$)
-  const routeChange$ = map(Operations.setCurrentStep, route$)
-  const initApp$ = setInitState$.withLatestFrom(routeChange$,
-    (setInitState, routeChange) => compose(routeChange, setInitState))
+  const setCurrentStep$ = map(Operations.setCurrentStep, route$)
   const postState$ = map(Operations.postState, actions.postState$)
+  const initApp$ = setInitState$.withLatestFrom(setCurrentStep$,
+    (setInitState, setCurrentStep) => compose(setCurrentStep, setInitState))
 
-  const allOperations$ = Rx.Observable
-    .merge(updateField$, initApp$, routeChange$, postState$)
+  const allOperations$ = Rx.Observable.merge(updateField$, initApp$, setCurrentStep$, postState$)
 
   const state$ = allOperations$
     .scan((state, operation) => operation(state), defaultState)

@@ -1,8 +1,9 @@
 /** @jsx hJSX */
-import {identity, adjust, max, min, nth, gte, toString, findIndex, equals, any, map, reduce, merge, concat, append, replace, compose, match, prop, propEq, eqProps, path, assoc, assocPath} from 'ramda'
+import {identity, max, min, nth, map, compose, prop} from 'ramda'
 import {defaultState} from './model'
 import {Maybe} from 'ramda-fantasy'
-import {h} from '@cycle/dom'
+import {hJSX} from '@cycle/dom'
+import {log} from '../../util'
 
 const getLinks = state => {
   const prevStep = max(0, state.currentStep - 1)
@@ -14,31 +15,34 @@ const getLinks = state => {
 }
 
 const renderFields = map(field =>
-  h('div', { className: 'field' }, [
-    h('div', field.name), h('input', { type: 'text', value: field.val ? field.val : '', id: field.key }),
-    h('div', field.val)
-  ]))
+  <div className="field">
+    <div>{field.name}</div>
+    <input type="text" value={field.val ? field.val : ''} id={field.key} />
+    <div>{field.val}</div>
+  </div>
+)
 
 const view = $state => $state
   .startWith(defaultState)
-  // .map(log)
   .map(state => {
-    const activeStep = path(['steps', state.currentStep], state)
-    const fields = Maybe(path(['steps', state.currentStep, 'fields'], state))
+    const activeStep = nth(state.currentStep, state.steps)
+    const fields = compose(map(prop('fields')), Maybe, nth(state.currentStep))(state.steps)
     const {prevLink, nextLink} = getLinks(state)
+    const stepsIndicator = state.loading ? '' : (state.currentStep + 1) + ' of ' + state.totalSteps
+    const loadingIndicator = state.loading ? <div className="alert alert-info pos-f-t m-t-lg">Loading</div> : null
     return (
-      h('div', { className: 'container page text-center' }, [
-        h('h1', activeStep ? activeStep.title : ''),
-        h('div', Maybe.maybe([], renderFields, fields)),
-        h('footer', { className: 'navbar navbar-dark navbar-fixed-bottom'}, [
-          h('div', { className: 'footer-inner btn-toolbar' }, [
-            h('a', { className: 'back btn', href: "#" + prevLink }, 'Back'),
-            h('a', { className: 'continue btn btn-success', href: "#" + nextLink }, 'Continue'),
-            h('div', { className: 'm-t' }, state.loading ? '' : (state.currentStep + 1) + ' of ' + state.totalSteps),
-            state.loading ? h('div', { className: 'alert alert-info pos-f-t m-t-lg' }, 'Loooading') : null
-          ])
-        ])
-      ])
+      <div className="container page text-center">
+        <h1>{activeStep ? activeStep.title : ''}</h1>
+        <div>{Maybe.maybe([], renderFields, fields)}</div>
+        <footer className="navbar navbar-fixed-bottom">
+          <div className="footer-inner btn-toolbar">
+            <a href={'#' + prevLink} className="back btn">Back</a>
+            <a href={'#' + nextLink} className="continue btn btn-success">Continue</a>
+            <div className="m-t">{stepsIndicator}</div>
+            {loadingIndicator}
+          </div>
+        </footer>
+      </div>
     )
   })
 
