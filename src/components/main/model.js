@@ -1,5 +1,6 @@
 import {identity, adjust, max, min, nth, gte, toString, findIndex, equals, any, map, reduce, merge, concat, append, replace, compose, match, prop, propEq, eqProps, path, assoc, assocPath} from 'ramda'
 import {run, Rx} from '@cycle/core'
+import {log, httpResponseToState} from '../../util'
 
 const defaultState = {
   loading: true,
@@ -28,7 +29,11 @@ const Operations = {
     return assoc('steps', updatedSteps, state)
   },
 
-  setInitState: newState => oldState => merge(oldState, newState),
+  setInitState: res => oldState => {
+    const newState = httpResponseToState(res)
+    
+    return merge(oldState, newState)
+  },
 
   setCurrentStep: route => state => {
     if (any(equals(route), state.routes)) {
@@ -39,15 +44,13 @@ const Operations = {
     }
   },
 
-  postState: () => state =>
-    // compose()(state.steps)
-    state
+  postState: () => state => state
 }
 
-const model = function (actions) {
+const model = function (mainHTTPresponse$, route$, actions) {
   const updateField$ = map(Operations.updateField, actions.fieldInput$)
-  const setInitState$ = map(Operations.setInitState, actions.initState$)
-  const routeChange$ = map(Operations.setCurrentStep, actions.routeChange$)
+  const setInitState$ = map(Operations.setInitState, mainHTTPresponse$)
+  const routeChange$ = map(Operations.setCurrentStep, route$)
   const initApp$ = setInitState$.withLatestFrom(routeChange$,
     (setInitState, routeChange) => compose(routeChange, setInitState))
   const postState$ = map(Operations.postState, actions.postState$)

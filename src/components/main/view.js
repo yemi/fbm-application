@@ -1,3 +1,4 @@
+/** @jsx hJSX */
 import {identity, adjust, max, min, nth, gte, toString, findIndex, equals, any, map, reduce, merge, concat, append, replace, compose, match, prop, propEq, eqProps, path, assoc, assocPath} from 'ramda'
 import {defaultState} from './model'
 import {Maybe} from 'ramda-fantasy'

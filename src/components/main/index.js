@@ -2,14 +2,17 @@ import {Rx} from '@cycle/core'
 import intent from './intent'
 import view from './view'
 import {model} from './model'
-import {API_URL} from '../../config'
+import {mainHttpResponse, mainHttpRequest} from './http'
 
-const main = (sources) => {
+const main = sources => {
+  const mainHttpResponse$ = mainHttpResponse(sources.HTTP)
   const actions = intent(sources)
-  const state$ = model(actions)
+  const state$ = model(mainHttpResponse$, sources.Route, actions)
+  const vTree$ = view(state$)
+  const request$ = mainHttpRequest()
   return {
-    DOM: view(state$),
-    HTTP: Rx.Observable.just(API_URL).map(url => ({ url: url, method: 'GET' }))
+    DOM: vTree$,
+    HTTP: request$
   }
 }
 
