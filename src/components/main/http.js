@@ -1,15 +1,23 @@
 import {Rx} from '@cycle/core'
 import {API_URL} from '../../config'
-import {urlToRequestObjectWithHeaders, isTruthy} from '../../util'
+import {log, urlToRequestObjectWithHeaders, isTruthy} from '../../util'
 
-function mainHttpResponse (HttpSource) {
-  const applicationState$ = HttpSource
-    .filter(response$ => response$.request.url === `${API_URL}/application`)
+function fetchDataResponse (httpSource) {
+  return httpSource
+    .filter(res$ =>
+      res$.request.url === `${API_URL}/application` && res$.request.method === 'GET')
     .mergeAll()
-    .filter(response => isTruthy(response.body))
-    .map(response => response.body)
+    .filter(res => isTruthy(res.body))
+    .map(res => res.body)
     // .publishValue([]).refCount()
-  return applicationState$
+}
+
+function postStateResponse (httpSource) {
+  return httpSource
+    .filter(res$ =>
+      res$.request.url === `${API_URL}/application` && res$.request.method === 'POST')
+    .mergeAll()
+    .map(res => ({ success: res.statusCode === 200 }))
 }
 
 function mainHttpRequest (...otherRequest$) {
@@ -19,4 +27,4 @@ function mainHttpRequest (...otherRequest$) {
   return request$
 }
 
-export default {mainHttpRequest, mainHttpResponse}
+export default {mainHttpRequest, fetchDataResponse, postStateResponse}

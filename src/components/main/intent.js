@@ -1,4 +1,4 @@
-import {compose, map, prop, assoc} from 'ramda'
+import {compose, map, prop, assoc, always} from 'ramda'
 import {defaultState} from './model'
 
 const eventToFieldInput = ev => ({ key: ev.target.id, val: ev.target.value })
