@@ -17,14 +17,15 @@ function postStateResponse (httpSource) {
     .filter(res$ =>
       res$.request.url === `${API_URL}/application` && res$.request.method === 'POST')
     .mergeAll()
+    .map(log)
     .map(res => ({ success: res.statusCode === 200 }))
 }
 
-function mainHttpRequest (...otherRequest$) {
+function httpRequest (...otherRequest$) {
   const initialApplicationRequest$ = Rx.Observable.just(`${API_URL}/application`)
     .map(urlToRequestObjectWithHeaders)
   const request$ = Rx.Observable.merge(initialApplicationRequest$, ...otherRequest$)
   return request$
 }
 
-export default {mainHttpRequest, fetchDataResponse, postStateResponse}
+export default {httpRequest, fetchDataResponse, postStateResponse}

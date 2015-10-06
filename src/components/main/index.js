@@ -2,22 +2,20 @@ import {Rx} from '@cycle/core'
 import intent from './intent'
 import view from './view'
 import {model} from './model'
-import {fetchDataResponse, postStateResponse, mainHttpRequest} from './http'
+import {fetchDataResponse, postStateResponse, httpRequest} from './http'
 import {log} from '../../util'
 
 const main = sources => {
-  const fetchDataResponse$ = fetchDataResponse(sources.HTTP)
-  const postStateResponse$ = postStateResponse(sources.HTTP)
-  const proxyPostStateRequests$ = new Rx.Subject()
+  const responses = {
+    fetchDataResponse$: fetchDataResponse(sources.HTTP),
+    postStateResponse$: postStateResponse(sources.HTTP)
+  }
+  const proxies = {
+    postStateRequest$: new Rx.Subject()
+  }
   const actions = intent(sources)
-  const request$ = mainHttpRequest(proxyPostStateRequests$)
-  const state$ = model(
-    actions,
-    fetchDataResponse$,
-    postStateResponse$,
-    sources.Route,
-    proxyPostStateRequests$
-  )
+  const request$ = httpRequest(proxies.postStateRequest$)
+  const state$ = model(actions, responses, proxies, sources.Route, sources.localStorage)
   const vTree$ = view(state$)
   return {
     DOM: vTree$,

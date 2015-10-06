@@ -24,11 +24,12 @@ const renderFields = map(field =>
 
 const view = $state => $state
   .startWith(defaultState)
+  .map(log)
   .map(state => {
     const activeStep = nth(state.currentStep, state.steps)
     const fields = compose(map(prop('fields')), Maybe, nth(state.currentStep))(state.steps)
     const {prevLink, nextLink} = getLinks(state)
-    const stepsIndicator = state.loading ? '' : (state.currentStep + 1) + ' of ' + state.totalSteps
+    const stepsIndicator = (state.currentStep + 1) + ' of ' + state.totalSteps
     const loadingIndicator = state.loading ? <div className="alert alert-info pos-f-t m-t-lg">Loading</div> : null
     return (
       <div className="container page text-center">

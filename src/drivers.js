@@ -5,9 +5,15 @@ const hashChangeToRoute = compose(replace('#', ''), nth(0), match(/\#[^\#]*$/), 
 const windowToRoute = compose(replace('#', ''), prop('hash'), prop('location'))
 
 const hashRouteDriver = () =>
-  Rx.Observable.merge(
-    map(windowToRoute, Rx.Observable.just(window)),
-    map(hashChangeToRoute, Rx.Observable.fromEvent(window, 'hashchange'))
-  )
+  Rx.Observable.merge(map(windowToRoute, Rx.Observable.just(window)),
+                      map(hashChangeToRoute, Rx.Observable.fromEvent(window, 'hashchange')))
 
-export default {hashRouteDriver}
+const makeLocalStorageDriver = key => payload$ => {
+  payload$.subscribe(payload => {
+    localStorage.setItem(key, JSON.stringify(payload))
+  })
+
+  return Rx.Observable.just(JSON.parse(localStorage.getItem(key)) || {})
+}
+
+export default {hashRouteDriver, makeLocalStorageDriver}

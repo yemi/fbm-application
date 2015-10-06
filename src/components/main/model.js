@@ -1,4 +1,4 @@
-import {always, pick, adjust, findIndex, equals, any, map, reduce, merge, append, compose, prop, propEq, eqProps} from 'ramda'
+import {view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, map, reduce, merge, append, compose, prop, propEq, eqProps} from 'ramda'
 import {run, Rx} from '@cycle/core'
 import {log, urlToRequestObjectWithHeaders} from '../../util'
 import {API_URL} from '../../config'
@@ -11,7 +11,11 @@ const defaultState = {
   routes: []
 }
 
-const updateField = fieldInput => (fields, field) => {
+const lenses = ({
+  fields: currentStep => compose(lensProp('steps'), lensIndex(currentStep), lensProp('fields'))
+})
+
+const updateFieldFold = fieldInput => (fields, field) => {
   if (eqProps('key', field, fieldInput)) {
     return append({ ...field, val: fieldInput.val }, fields)
   } else {
@@ -19,59 +23,85 @@ const updateField = fieldInput => (fields, field) => {
   }
 }
 
-const updateFields = fieldInput => step =>
-  ({ ...step, fields: reduce(updateField(fieldInput), [], step.fields) })
-
 const Operations = {
   updateField: fieldInput => state => {
-    const updatedSteps = adjust(updateFields(fieldInput), state.currentStep, state.steps)
+    const fieldsLens = lenses.fields(state.currentStep)
+    const fields = view(fieldsLens, state)
+    const updatedFields = reduce(updateFieldFold(fieldInput), [], fields)
+    const newState = set(fieldsLens, updatedFields, state)
 
-    return { ...state, steps: updatedSteps }
+    return newState
   },
 
-  setInitState: res => oldState => ({
-    ...oldState,
-    totalSteps: res.steps.length,
-    steps: res.steps,
-    loading: false,
-    routes: map(prop('slug'), res.steps)
-  }),
+  onFetchDataResponse: res => state => {
+    const newState = {
+      ...state,
+      totalSteps: res.steps.length,
+      steps: res.steps,
+      loading: false,
+      routes: map(prop('slug'), res.steps)
+    }
+
+    return newState
+  },
 
   setCurrentStep: route => state => {
-    if (any(equals(route), state.routes)) {
+    if (any(equals(route), state.routes) && !state.loading) {
       const newStep = findIndex(propEq('slug', route), state.steps)
+      const newState = { ...state, currentStep: newStep }
 
-      return { ...state, currentStep: newStep }
+      return newState
     } else {
       return state
     }
   },
 
-  postState: proxyPostRequest$ => () => state => {
-    proxyPostRequest$.onNext({
-      url: API_URL + '/application',
+  postState: postStateRequest$ => () => state => {
+    postStateRequest$.onNext({
+      url: `${API_URL}/application`,
       method: 'POST',
       send: map(pick(['slug', 'fields']), state.steps)
     })
 
-    return { ...state, loading: true }
+    const newState = { ...state, loading: true }
+
+    return newState
   },
 
-  handlePostStateResponse: ({success}) => state => {
-    return success ? { ...state, loading: false } : state
+  onPostStateResponse: ({err, success}) => state => {
+    const errs = [{ key: 'company-type', errMsg: 'Your company type should be ABBA'}]
+    if (err) {
+      // const fieldsLens = lenses.fields(state.currentStep)
+      // const fields = view(fieldsLens, state)
+      // const updatedFields = reduce((fields, field) =>
+      //
+      // , [], fields)
+      return state
+    }
+    return { ...state, loading: false }
   }
 }
 
-const model = (actions, fetchDataResponse$, postStateResponse$, route$, proxyPostRequest$) => {
+const model = (actions, responses, proxies, route$) => {
   const updateField$ = map(Operations.updateField, actions.fieldInput$)
-  const setInitState$ = map(Operations.setInitState, fetchDataResponse$)
-  const handlePostStateResponse$ = map(Operations.handlePostStateResponse, postStateResponse$)
+  const postState$ = map(Operations.postState(proxies.postStateRequest$), actions.postState$)
   const setCurrentStep$ = map(Operations.setCurrentStep, route$)
-  const postState$ = map(Operations.postState(proxyPostRequest$), actions.postState$)
-  const initApp$ = setInitState$.withLatestFrom(setCurrentStep$,
-    (setInitState, setCurrentStep) => compose(setCurrentStep, setInitState))
+  const onFetchDataResponse$ = map(Operations.onFetchDataResponse, responses.fetchDataResponse$)
+  const onPostStateResponse$ = map(Operations.onPostStateResponse, responses.postStateResponse$)
 
-  const allOperations$ = Rx.Observable.merge(updateField$, initApp$, setCurrentStep$, postState$, handlePostStateResponse$)
+  const initApp$ = onFetchDataResponse$.withLatestFrom(setCurrentStep$,
+    (onFetchDataResponse, setCurrentStep) => compose(setCurrentStep, onFetchDataResponse))
+
+  const delayStepChange$ = onPostStateResponse$.withLatestFrom(setCurrentStep$,
+    (onPostStateResponse, setCurrentStep) => compose(setCurrentStep, onPostStateResponse))
+
+  const allOperations$ = Rx.Observable.merge(
+    initApp$,
+    updateField$,
+    setCurrentStep$,
+    delayStepChange$,
+    postState$
+  )
 
   const state$ = allOperations$
     .scan((state, operation) => operation(state), defaultState)
