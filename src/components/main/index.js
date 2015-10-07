@@ -3,6 +3,7 @@ import intent from './intent'
 import view from './view'
 import {model} from './model'
 import {fetchDataResponse, postStateResponse, httpRequest} from './http'
+import {localStorageSink} from './localStorage'
 import {log} from '../../util'
 
 const main = sources => {
@@ -15,11 +16,13 @@ const main = sources => {
   }
   const actions = intent(sources)
   const request$ = httpRequest(proxies.postStateRequest$)
-  const state$ = model(actions, responses, proxies, sources.Route, sources.localStorage)
+  const state$ = model(actions, responses, proxies, sources.Route, sources.LocalStorage)
   const vTree$ = view(state$)
+  const localStorageSink$ = localStorageSink(state$)
   return {
     DOM: vTree$,
-    HTTP: request$
+    HTTP: request$,
+    LocalStorage: localStorageSink$
   }
 }
 

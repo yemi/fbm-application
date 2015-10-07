@@ -24,7 +24,6 @@ const renderFields = map(field =>
 
 const view = $state => $state
   .startWith(defaultState)
-  .map(log)
   .map(state => {
     const activeStep = nth(state.currentStep, state.steps)
     const fields = compose(map(prop('fields')), Maybe, nth(state.currentStep))(state.steps)

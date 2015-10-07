@@ -1,6 +1,6 @@
-import {view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, map, reduce, merge, append, compose, prop, propEq, eqProps} from 'ramda'
+import {has, filter, view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, map, reduce, merge, append, compose, prop, propEq, eqProps} from 'ramda'
 import {run, Rx} from '@cycle/core'
-import {log, urlToRequestObjectWithHeaders} from '../../util'
+import {log, mergeStateWithSourceData} from '../../util'
 import {API_URL} from '../../config'
 
 const defaultState = {
@@ -33,20 +33,14 @@ const Operations = {
     return newState
   },
 
-  onFetchDataResponse: res => state => {
-    const newState = {
-      ...state,
-      totalSteps: res.steps.length,
-      steps: res.steps,
-      loading: false,
-      routes: map(prop('slug'), res.steps)
-    }
+  onSourceData: sourceData => state => {
+    const newState = mergeStateWithSourceData(state, sourceData)
 
     return newState
   },
 
   setCurrentStep: route => state => {
-    if (any(equals(route), state.routes) && !state.loading) {
+    if (any(equals(route), state.routes)) {
       const newStep = findIndex(propEq('slug', route), state.steps)
       const newState = { ...state, currentStep: newStep }
 
@@ -56,8 +50,8 @@ const Operations = {
     }
   },
 
-  postState: postStateRequest$ => () => state => {
-    postStateRequest$.onNext({
+  postState: proxies => () => state => {
+    proxies.postStateRequest$.onNext({
       url: `${API_URL}/application`,
       method: 'POST',
       send: map(pick(['slug', 'fields']), state.steps)
@@ -82,29 +76,36 @@ const Operations = {
   }
 }
 
-const model = (actions, responses, proxies, route$) => {
+const model = (actions, responses, proxies, route$, localStorage$) => {
+
+  // Convenience
+  const nonEmptyLocalStorage$ = filter(has('steps'), localStorage$)
+  const sourceData$ = Rx.Observable.merge(responses.fetchDataResponse$, nonEmptyLocalStorage$).first()
+
+  // Operations
   const updateField$ = map(Operations.updateField, actions.fieldInput$)
-  const postState$ = map(Operations.postState(proxies.postStateRequest$), actions.postState$)
+  const postState$ = map(Operations.postState(proxies), actions.postState$)
   const setCurrentStep$ = map(Operations.setCurrentStep, route$)
-  const onFetchDataResponse$ = map(Operations.onFetchDataResponse, responses.fetchDataResponse$)
   const onPostStateResponse$ = map(Operations.onPostStateResponse, responses.postStateResponse$)
+  const onSourceData$ = map(Operations.onSourceData, sourceData$)
 
-  const initApp$ = onFetchDataResponse$.withLatestFrom(setCurrentStep$,
-    (onFetchDataResponse, setCurrentStep) => compose(setCurrentStep, onFetchDataResponse))
+  // Combiners
+  const initApp$ = onSourceData$.withLatestFrom(setCurrentStep$,
+    (onSourceData, setCurrentStep) => compose(setCurrentStep, onSourceData))
 
-  const delayStepChange$ = onPostStateResponse$.withLatestFrom(setCurrentStep$,
-    (onPostStateResponse, setCurrentStep) => compose(setCurrentStep, onPostStateResponse))
-
+  // All operations
   const allOperations$ = Rx.Observable.merge(
     initApp$,
     updateField$,
     setCurrentStep$,
-    delayStepChange$,
-    postState$
+    postState$,
+    onPostStateResponse$
   )
 
+  // Accumulated state
   const state$ = allOperations$
     .scan((state, operation) => operation(state), defaultState)
+    .share()
 
   return state$
 }
