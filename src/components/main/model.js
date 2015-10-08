@@ -1,4 +1,4 @@
-import {has, filter, view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, map, reduce, append, compose, prop, propEq, eqProps} from 'ramda'
+import {has, filter, view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, map, append, compose, prop, propEq, eqProps} from 'ramda'
 import {run, Rx} from '@cycle/core'
 import {log, mergeStateWithSourceData} from '../../util'
 import {API_URL} from '../../config'

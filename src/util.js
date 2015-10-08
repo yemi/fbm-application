@@ -17,10 +17,6 @@ export default {
     }
   },
 
-  isTruthy (x) {
-    return !!x
-  },
-
   mergeStateWithSourceData (state, sourceData) {
     const newState = {
       ...state,
