@@ -16,22 +16,13 @@ const lenses = ({
   fields: currentStep => compose(lensProp('steps'), lensIndex(currentStep), lensProp('fields'))
 })
 
-const updateFieldFold = fieldInput => (fields, field) => {
-  if (eqProps('key', field, fieldInput)) {
-    if (!fieldInput.val && field.required) {
-
-    }
-    return append({ ...field, val: fieldInput.val }, fields)
-  } else {
-    return append(field, fields)
-  }
-}
-
 const Operations = {
   updateField: fieldInput => state => {
     const fieldsLens = lenses.fields(state.currentStep)
     const fields = view(fieldsLens, state)
-    const updatedFields = reduce(updateFieldFold(fieldInput), [], fields)
+    const fieldIndex = findIndex(propEq('key', fieldInput.key), fields)
+    const updateField = field => ({ ...field, val: fieldInput.val })
+    const updatedFields = adjust(updateField, fieldIndex, fields)
     const newState = set(fieldsLens, updatedFields, state)
 
     return newState
