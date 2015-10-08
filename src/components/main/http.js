@@ -1,31 +1,39 @@
 import {Rx} from '@cycle/core'
 import {API_URL} from '../../config'
-import {log, urlToRequestObjectWithHeaders, isTruthy} from '../../util'
+import {log, urlToRequestObjectWithHeaders} from '../../util'
+import {has, compose, filter, propEq, prop, map, both} from 'ramda'
+import {mergeAll, merge, rxJust} from '../../helpers'
 
-function fetchDataResponse (httpSource) {
-  return httpSource
-    .filter(res$ =>
-      res$.request.url === `${API_URL}/application` && res$.request.method === 'GET')
-    .mergeAll()
-    .filter(res => isTruthy(res.body))
-    .map(res => res.body)
-    // .publishValue([]).refCount()
+// Helpers
+
+const isRequestUrlPath = path => compose(propEq('url', `${API_URL}/${path}`), prop('request'))
+
+const isRequestMethod = method => compose(propEq('method', method), prop('request'))
+
+const requestFilter = method => both(isRequestUrlPath('application'), isRequestMethod(method))
+
+
+// Fetch data response (GET)
+
+const fetchDataResponse = compose(map(prop('body')), filter(has('body')), mergeAll, filter(requestFilter('GET')))
+
+
+// Post state response (POST)
+
+const cleanPostResponse = res => ({ success: res.statusCode === 200 })
+
+const postStateResponse = compose(map(cleanPostResponse), mergeAll, filter(requestFilter('POST')))
+
+
+// Http requests
+
+const initialApplicationRequest$ = map(urlToRequestObjectWithHeaders, rxJust(`${API_URL}/application`))
+
+const httpRequest = (...otherRequest$) => merge(initialApplicationRequest$, ...otherRequest$)
+
+
+export default {
+  httpRequest,
+  fetchDataResponse,
+  postStateResponse
 }
-
-function postStateResponse (httpSource) {
-  return httpSource
-    .filter(res$ =>
-      res$.request.url === `${API_URL}/application` && res$.request.method === 'POST')
-    .mergeAll()
-    .map(log)
-    .map(res => ({ success: res.statusCode === 200 }))
-}
-
-function httpRequest (...otherRequest$) {
-  const initialApplicationRequest$ = Rx.Observable.just(`${API_URL}/application`)
-    .map(urlToRequestObjectWithHeaders)
-  const request$ = Rx.Observable.merge(initialApplicationRequest$, ...otherRequest$)
-  return request$
-}
-
-export default {httpRequest, fetchDataResponse, postStateResponse}

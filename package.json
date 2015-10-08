@@ -1,8 +1,8 @@
 {
-  "name": "example",
+  "name": "application",
   "version": "0.0.0",
   "private": true,
-  "author": "Andre Staltz",
+  "author": "Fabian Rios",
   "license": "MIT",
   "dependencies": {
     "@cycle/core": "3.1.x",

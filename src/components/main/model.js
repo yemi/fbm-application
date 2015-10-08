@@ -1,7 +1,8 @@
-import {has, filter, view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, map, reduce, merge, append, compose, prop, propEq, eqProps} from 'ramda'
+import {has, filter, view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, map, reduce, append, compose, prop, propEq, eqProps} from 'ramda'
 import {run, Rx} from '@cycle/core'
 import {log, mergeStateWithSourceData} from '../../util'
 import {API_URL} from '../../config'
+import {head, withLatestFrom, scan, share, merge} from '../../helpers'
 
 const defaultState = {
   loading: true,
@@ -17,6 +18,9 @@ const lenses = ({
 
 const updateFieldFold = fieldInput => (fields, field) => {
   if (eqProps('key', field, fieldInput)) {
+    if (!fieldInput.val && field.required) {
+
+    }
     return append({ ...field, val: fieldInput.val }, fields)
   } else {
     return append(field, fields)
@@ -80,7 +84,7 @@ const model = (actions, responses, proxies, route$, localStorage$) => {
 
   // Convenience
   const nonEmptyLocalStorage$ = filter(has('steps'), localStorage$)
-  const sourceData$ = Rx.Observable.merge(responses.fetchDataResponse$, nonEmptyLocalStorage$).first()
+  const sourceData$ = head(merge(responses.fetchDataResponse$, nonEmptyLocalStorage$))
 
   // Operations
   const updateField$ = map(Operations.updateField, actions.fieldInput$)
@@ -90,11 +94,11 @@ const model = (actions, responses, proxies, route$, localStorage$) => {
   const onSourceData$ = map(Operations.onSourceData, sourceData$)
 
   // Combiners
-  const initApp$ = onSourceData$.withLatestFrom(setCurrentStep$,
-    (onSourceData, setCurrentStep) => compose(setCurrentStep, onSourceData))
+  const setInitStateAndStep = (onSourceData, setCurrentStep) => compose(setCurrentStep, onSourceData)
+  const initApp$ = withLatestFrom(setInitStateAndStep, onSourceData$, setCurrentStep$)
 
   // All operations
-  const allOperations$ = Rx.Observable.merge(
+  const allOperations$ = merge(
     initApp$,
     updateField$,
     setCurrentStep$,
@@ -102,10 +106,9 @@ const model = (actions, responses, proxies, route$, localStorage$) => {
     onPostStateResponse$
   )
 
-  // Accumulated state
-  const state$ = allOperations$
-    .scan((state, operation) => operation(state), defaultState)
-    .share()
+  const stateFold = (state, operation) => operation(state)
+  const accumulateState = compose(share, scan(stateFold, defaultState))
+  const state$ = accumulateState(allOperations$)
 
   return state$
 }
