@@ -29,8 +29,7 @@ export default {
     return newState
   },
 
-  lenses: currentStep => ({
-    step: compose(lensProp('steps'), lensIndex(currentStep)),
-    fields: compose(lensProp('steps'), lensIndex(currentStep), lensProp('fields'))
+  lenses: activeStep => ({
+    fields: compose(lensProp('steps'), lensIndex(activeStep), lensProp('fields'))
   })
 }

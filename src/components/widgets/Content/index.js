@@ -5,12 +5,13 @@ import renderField from '../Field'
 
 const renderContent = state$ => {
   const vTree$ = map(state => {
-    const step = nth(state.currentStep, state.steps)
+    const step = nth(state.activeStep, state.steps)
     const renderedFields = map(renderField, step.fields)
 
     return (
       <div>
         <h1>{step.title}</h1>
+        <p>{step.subtitle}</p>
         <div>{renderedFields}</div>
       </div>
     )
