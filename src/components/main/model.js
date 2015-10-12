@@ -1,8 +1,8 @@
-import {has, filter, view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, map, append, compose, prop, propEq, eqProps} from 'ramda'
+import {not, isEmpty, has, filter, view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, map, append, compose, prop, propEq, eqProps} from 'ramda'
 import {run, Rx} from '@cycle/core'
-import {log, mergeStateWithSourceData} from '../../util'
+import {log, lenses, mergeStateWithSourceData} from '../../utils'
 import {API_URL} from '../../config'
-import {head, withLatestFrom, scan, share, merge} from '../../helpers'
+import {head, withLatestFrom, scan, shareReplay, merge} from '../../helpers'
 
 const defaultState = {
   loading: true,
@@ -12,17 +12,13 @@ const defaultState = {
   routes: []
 }
 
-const lenses = ({
-  fields: currentStep => compose(lensProp('steps'), lensIndex(currentStep), lensProp('fields'))
-})
-
 const Operations = {
   updateField: fieldInput => state => {
-    const fieldsLens = lenses.fields(state.currentStep)
+    const fieldsLens = lenses(state.currentStep).fields
     const fields = view(fieldsLens, state)
-    const fieldIndex = findIndex(propEq('key', fieldInput.key), fields)
+    const updatedFieldIndex = findIndex(propEq('key', fieldInput.key), fields)
     const updateField = field => ({ ...field, val: fieldInput.val })
-    const updatedFields = adjust(updateField, fieldIndex, fields)
+    const updatedFields = adjust(updateField, updatedFieldIndex, fields)
     const newState = set(fieldsLens, updatedFields, state)
 
     return newState
@@ -71,11 +67,7 @@ const Operations = {
   }
 }
 
-const model = (actions, responses, proxies, route$, localStorage$) => {
-
-  // Convenience
-  const nonEmptyLocalStorage$ = filter(has('steps'), localStorage$)
-  const sourceData$ = head(merge(responses.fetchDataResponse$, nonEmptyLocalStorage$))
+const model = (actions, responses, proxies, sourceData$, route$) => {
 
   // Operations
   const updateField$ = map(Operations.updateField, actions.fieldInput$)
@@ -98,10 +90,11 @@ const model = (actions, responses, proxies, route$, localStorage$) => {
   )
 
   const stateFold = (state, operation) => operation(state)
-  const accumulateState = compose(share, scan(stateFold, defaultState))
+  const accumulateState = compose(shareReplay(1), scan(stateFold, defaultState))
   const state$ = accumulateState(allOperations$)
 
-  return state$
+  return filter(compose(not, isEmpty, prop('steps')), state$)
+  // return state$
 }
 
 export default {defaultState, model}

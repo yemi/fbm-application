@@ -1,6 +1,6 @@
 import {Rx} from '@cycle/core'
 import {API_URL} from '../../config'
-import {log, urlToRequestObjectWithHeaders} from '../../util'
+import {log, urlToRequestObjectWithHeaders} from '../../utils'
 import {has, compose, filter, propEq, prop, map, both} from 'ramda'
 import {mergeAll, merge, rxJust} from '../../helpers'
 
@@ -22,7 +22,7 @@ const fetchDataResponse = compose(map(prop('body')), filter(has('body')), mergeA
 
 const cleanPostResponse = res => ({ success: res.statusCode === 200 })
 
-const postStateResponse = compose(map(cleanPostResponse), mergeAll, filter(requestFilter('POST')))
+const postStateResponse = compose(map(cleanPostResponse), map(log), mergeAll, filter(requestFilter('POST')))
 
 
 // Http requests

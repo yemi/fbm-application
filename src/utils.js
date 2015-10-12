@@ -1,4 +1,4 @@
-import {map, prop} from 'ramda'
+import {map, prop, compose, lensProp, lensIndex} from 'ramda'
 
 export default {
   log (a) {
@@ -27,5 +27,10 @@ export default {
     }
 
     return newState
-  }
+  },
+
+  lenses: currentStep => ({
+    step: compose(lensProp('steps'), lensIndex(currentStep)),
+    fields: compose(lensProp('steps'), lensIndex(currentStep), lensProp('fields'))
+  })
 }

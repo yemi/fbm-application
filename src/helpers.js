@@ -10,9 +10,11 @@ export default {
 
   withLatestFrom: (f, observableA, observableB) => observableA.withLatestFrom(observableB, f),
 
+  combineLatest: Rx.Observable.combineLatest,
+
   scan: R.curry((f, a, m) => m instanceof Rx.Observable ? m.scan(f, a) : R.scan(f, a, m)),
 
-  share: observable => observable.share(),
+  shareReplay: num => observable => observable.shareReplay(1),
 
   head: m => m instanceof Rx.Observable ? m.first() : R.head(m),
 
