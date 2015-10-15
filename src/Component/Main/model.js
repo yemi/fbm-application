@@ -13,40 +13,44 @@ const defaultState = {
   routes: []
 }
 
-const validateFieldFold = ({fields, errs}, field) => {
+const updateFieldWithFieldInput = (fieldInput, fields) => {
+  const updatedFieldIndex = findIndex(propEq('key', fieldInput.key), fields)
+  const updateField = field => ({ ...field, value: fieldInput.value })
+  const updatedFields = adjust(updateField, updatedFieldIndex, fields)
+  return updatedFields
+}
+
+const validateFieldFold = ({fields, hasValidationErrors}, field) => {
   if (field.required && !field.value) {
     return {
       fields: append({ ...field, errMsg: 'Field is required' }, fields),
-      errs: ++errs
+      hasValidationErrors: true
     }
   } else {
     return {
       fields: append({ ...field, errMsg: '' }, fields),
-      errs: errs
+      hasValidationErrors: hasValidationErrors
     }
   }
 }
 
+const validateFields = fields => reduce(
+    validateFieldFold, { fields:[], hasValidationErrors:false }, fields)
+
 const Operations = {
+
   updateAndValidateFields: fieldInput => state => {
     const fieldsLens = lenses(state.activeStep).fields
     const fields = view(fieldsLens, state)
-    const updatedFieldIndex = findIndex(propEq('key', fieldInput.key), fields)
-    const updateField = field => ({ ...field, value: fieldInput.value })
-    const updatedFields = adjust(updateField, updatedFieldIndex, fields)
-    const validatedFields = reduce(validateFieldFold, { fields:[], errs:0 }, updatedFields)
-    const newState = set(fieldsLens, validatedFields.fields, state)
-
-    if (validatedFields.errs > 0) {
-      return { ...newState, canContinue: false }
-    } else {
-      return { ...newState, canContinue: true }
-    }
+    const updatedFields = updateFieldWithFieldInput(fieldInput, fields)
+    const validatedFields = validateFields(updatedFields)
+    const validatedState = set(fieldsLens, validatedFields.fields, state)
+    const newState = { ...validatedState, canContinue: not(validatedFields.hasValidationErrors) }
+    return newState
   },
 
-  onSourceData: sourceData => state => {
+  setInitState: sourceData => state => {
     const newState = mergeStateWithSourceData(state, sourceData)
-
     return newState
   },
 
@@ -54,7 +58,6 @@ const Operations = {
     if (any(equals(route), state.routes)) {
       const newStep = findIndex(propEq('slug', route), state.steps)
       const newState = { ...state, activeStep: newStep }
-
       return newState
     } else {
       return state
@@ -67,9 +70,7 @@ const Operations = {
       method: 'POST',
       send: map(pick(['slug', 'fields']), state.steps)
     })
-
     const newState = { ...state, loading: true }
-
     return newState
   },
 
@@ -98,11 +99,11 @@ const model = (actions, responses, proxies, route$, localStorageSource$) => {
   const postState$ = map(Operations.postState(proxies), actions.postState$)
   const setActiveStep$ = map(Operations.setActiveStep, route$)
   const onPostStateResponse$ = map(Operations.onPostStateResponse, responses.postStateResponse$)
-  const onSourceData$ = map(Operations.onSourceData, sourceData$)
+  const setInitState$ = map(Operations.setInitState, sourceData$)
 
   // Combiners
-  const setInitStateAndStep = (onSourceData, setActiveStep) => compose(setActiveStep, onSourceData)
-  const initApp$ = withLatestFrom(setInitStateAndStep, onSourceData$, setActiveStep$)
+  const setInitStateAndStep = (setInitState, setActiveStep) => compose(setActiveStep, setInitState)
+  const initApp$ = withLatestFrom(setInitStateAndStep, setInitState$, setActiveStep$)
 
   // All operations
   const allOperations$ = merge(
@@ -116,9 +117,9 @@ const model = (actions, responses, proxies, route$, localStorageSource$) => {
   const stateFold = (state, operation) => operation(state)
   const accumulateState = compose(shareReplay(1), scan(stateFold, defaultState))
   const state$ = accumulateState(allOperations$)
-  const nonEmptyStateFilter = compose(not, isEmpty, prop('steps'))
+  const stateHasSteps = compose(not, isEmpty, prop('steps'))
 
-  return filter(nonEmptyStateFilter, state$)
+  return filter(stateHasSteps, state$)
 }
 
 export default {defaultState, model}

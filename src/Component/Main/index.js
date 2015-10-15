@@ -4,8 +4,8 @@ import view from './view'
 import {model} from './model'
 import {fetchDataResponse, postStateResponse, httpRequest} from './http'
 import {localStorageSink} from './localStorage'
-import Footer from '../widgets/Footer'
-import Content from '../widgets/Content'
+import Footer from '../Footer'
+import Content from '../Content'
 
 const main = sources => {
   const responses = {

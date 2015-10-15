@@ -16,6 +16,8 @@ export default {
 
   shareReplay: num => observable => observable.shareReplay(1),
 
+  retry: num => observable => observable.retry(num),
+
   head: m => m instanceof Rx.Observable ? m.first() : R.head(m),
 
   rxJust: a => Rx.Observable.just(a)
