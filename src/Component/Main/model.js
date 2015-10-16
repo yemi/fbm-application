@@ -95,7 +95,7 @@ const model = (actions, responses, proxies, route$, localStorageSource$) => {
   const sourceData$ = head(merge(responses.fetchDataResponse$, nonEmptyLocalStorage$))
 
   // Operations
-  const updateAndValidateFields$ = map(Operations.updateAndValidateFields, actions.fieldInput$)
+  // const updateAndValidateFields$ = map(Operations.updateAndValidateFields, actions.fieldChange$)
   const postState$ = map(Operations.postState(proxies), actions.postState$)
   const setActiveStep$ = map(Operations.setActiveStep, route$)
   const onPostStateResponse$ = map(Operations.onPostStateResponse, responses.postStateResponse$)
@@ -108,7 +108,7 @@ const model = (actions, responses, proxies, route$, localStorageSource$) => {
   // All operations
   const allOperations$ = merge(
     initApp$,
-    updateAndValidateFields$,
+    // updateAndValidateFields$,
     setActiveStep$,
     postState$,
     onPostStateResponse$

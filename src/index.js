@@ -1,13 +1,14 @@
-import {run} from '@cycle/core'
-import {makeDOMDriver} from '@cycle/dom'
+import {run, Rx} from '@cycle/core'
+import {makeDOMDriver, h} from '@cycle/dom'
 import {makeHTTPDriver} from '@cycle/http'
 import {hashRouteDriver, makeLocalStorageDriver} from './drivers'
 import main from './Component/Main'
-import Field from './Component/Field'
+import InputField from './Component/Field'
+
 
 run(main, {
   DOM: makeDOMDriver('#main-container', {
-    'field': Field
+    'input-field': InputField
   }),
   HTTP: makeHTTPDriver(),
   LocalStorage: makeLocalStorageDriver('fbm-application'),
