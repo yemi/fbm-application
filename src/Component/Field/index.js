@@ -5,40 +5,44 @@ import {compose, map, prop} from 'ramda'
 import {combineLatest, merge, head, concat} from '../../helpers'
 import {log} from '../../utils'
 
-function inputField(responses) {
+function inputField(sources) {
   function intent(DOM) {
     return {
-      valueChange$: DOM.select('.input').events('change')
+      valueChange$: DOM.select('input').events('change')
         .map(ev => ev.target.value)
     }
   }
 
   function model(context, actions) {
-    return context.props.get('*').map(props => ({props}))
+    const props$ = context.props.get('*')
+
+    return props$.map(props => ({props}))
   }
 
   function view(state$) {
     return state$.map(state => {
-      let {label, id, key, type, value} = state.props
+      console.log(state)
+      const {label, id, key, type, value} = state.props
       return (
-        <div className="field" key={key}>
+        <div>
           <div>{label}</div>
           <input type={type} value={value ? value : ''} id={id} />
           <div>{value}</div>
         </div>
       )
-    });
+    })
   }
 
-  let actions = intent(responses.DOM);
-  let vtree$ = view(model(responses, actions));
+  const actions = intent(sources.DOM)
+  const state$ = model(sources, actions)
+  const vtree$ = view(state$)
 
   return {
     DOM: vtree$,
     events: {
-      newValue: actions.valueChange$
+      newValue: state$
     }
-  };
+  }
 }
 
 export default inputField

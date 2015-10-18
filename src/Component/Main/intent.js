@@ -11,7 +11,7 @@ import {merge} from '../../helpers'
 
 const intent = ({DOM}) => ({
   // fieldInput$: map(eventToFieldInput, onBlurAndChange(DOM, 'input')),
-  // fieldChange$: map(prop('detail'), DOM.select('.field').events('newValue')),
+  fieldChange$: map(prop('detail'), DOM.select('.field').events('newValue')),
   postState$: DOM.select('.continue').events('click')
 })
 

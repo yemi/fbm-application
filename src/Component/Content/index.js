@@ -1,20 +1,23 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
 import {nth, map} from 'ramda'
-import renderField from '../Field'
+
+const renderFields = field => <input-field className="field"
+                                           id={field.id}
+                                           label={field.label}
+                                           type={field.type}
+                                           value={field.value} />
 
 const renderContent = state$ => {
   const vTree$ = map(state => {
     const step = nth(state.activeStep, state.steps)
-    // const renderedFields = map(renderField, step.fields)
-    // <div>{renderedFields}</div>
-        // <input-field key="1" label="Weight" unit="kg" min="40" initial="120" max="140" />
+    const fields = map(renderFields, step.fields)
 
     return (
       <div>
         <h1>{step.title}</h1>
         <p>{step.subtitle}</p>
-        <input-field id="company-name" label="Company name" type="text" value="valuz" key="1" />
+        {fields}
       </div>
     )
   }, state$)

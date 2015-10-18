@@ -40,13 +40,15 @@ const validateFields = fields => reduce(
 const Operations = {
 
   updateAndValidateFields: fieldInput => state => {
-    const fieldsLens = lenses(state.activeStep).fields
-    const fields = view(fieldsLens, state)
-    const updatedFields = updateFieldWithFieldInput(fieldInput, fields)
-    const validatedFields = validateFields(updatedFields)
-    const validatedState = set(fieldsLens, validatedFields.fields, state)
-    const newState = { ...validatedState, canContinue: not(validatedFields.hasValidationErrors) }
-    return newState
+    // const fieldsLens = lenses(state.activeStep).fields
+    // const fields = view(fieldsLens, state)
+    // const updatedFields = updateFieldWithFieldInput(fieldInput, fields)
+    // const validatedFields = validateFields(updatedFields)
+    // const validatedState = set(fieldsLens, validatedFields.fields, state)
+    // const newState = { ...validatedState, canContinue: not(validatedFields.hasValidationErrors) }
+    // return newState
+    console.log(fieldInput)
+    return state
   },
 
   setInitState: sourceData => state => {
@@ -95,7 +97,7 @@ const model = (actions, responses, proxies, route$, localStorageSource$) => {
   const sourceData$ = head(merge(responses.fetchDataResponse$, nonEmptyLocalStorage$))
 
   // Operations
-  // const updateAndValidateFields$ = map(Operations.updateAndValidateFields, actions.fieldChange$)
+  const updateAndValidateFields$ = map(Operations.updateAndValidateFields, actions.fieldChange$)
   const postState$ = map(Operations.postState(proxies), actions.postState$)
   const setActiveStep$ = map(Operations.setActiveStep, route$)
   const onPostStateResponse$ = map(Operations.onPostStateResponse, responses.postStateResponse$)
@@ -108,7 +110,7 @@ const model = (actions, responses, proxies, route$, localStorageSource$) => {
   // All operations
   const allOperations$ = merge(
     initApp$,
-    // updateAndValidateFields$,
+    updateAndValidateFields$,
     setActiveStep$,
     postState$,
     onPostStateResponse$
