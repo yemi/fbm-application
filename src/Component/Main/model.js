@@ -7,7 +7,7 @@ import {head, withLatestFrom, scan, shareReplay, merge} from '../../helpers'
 const defaultState = {
   loading: true,
   activeStep: 0,
-  canContinue: false,
+  canContinue: true,
   totalSteps: null,
   steps: [],
   routes: []
@@ -20,22 +20,22 @@ const updateFieldWithFieldInput = (fieldInput, fields) => {
   return updatedFields
 }
 
-const validateFieldFold = ({fields, hasValidationErrors}, field) => {
-  if (field.required && !field.value) {
-    return {
-      fields: append({ ...field, errMsg: 'Field is required' }, fields),
-      hasValidationErrors: true
-    }
-  } else {
-    return {
-      fields: append({ ...field, errMsg: '' }, fields),
-      hasValidationErrors: hasValidationErrors
-    }
-  }
-}
-
-const validateFields = fields => reduce(
-    validateFieldFold, { fields:[], hasValidationErrors:false }, fields)
+// const validateFieldFold = ({fields, hasValidationErrors}, field) => {
+//   if (field.required && !field.value) {
+//     return {
+//       fields: append({ ...field, errMsg: 'Field is required' }, fields),
+//       hasValidationErrors: true
+//     }
+//   } else {
+//     return {
+//       fields: append({ ...field, errMsg: '' }, fields),
+//       hasValidationErrors: hasValidationErrors
+//     }
+//   }
+// }
+//
+// const validateFields = fields => reduce(
+//     validateFieldFold, { fields:[], hasValidationErrors:false }, fields)
 
 const Operations = {
 
@@ -97,7 +97,7 @@ const model = (actions, responses, proxies, route$, localStorageSource$) => {
   const sourceData$ = head(merge(responses.fetchDataResponse$, nonEmptyLocalStorage$))
 
   // Operations
-  const updateAndValidateFields$ = map(Operations.updateAndValidateFields, actions.fieldChange$)
+  // const updateAndValidateFields$ = map(Operations.updateAndValidateFields, actions.fieldChange$)
   const postState$ = map(Operations.postState(proxies), actions.postState$)
   const setActiveStep$ = map(Operations.setActiveStep, route$)
   const onPostStateResponse$ = map(Operations.onPostStateResponse, responses.postStateResponse$)
@@ -110,7 +110,7 @@ const model = (actions, responses, proxies, route$, localStorageSource$) => {
   // All operations
   const allOperations$ = merge(
     initApp$,
-    updateAndValidateFields$,
+    // updateAndValidateFields$,
     setActiveStep$,
     postState$,
     onPostStateResponse$

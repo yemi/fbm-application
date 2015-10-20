@@ -4,6 +4,8 @@ import {nth, map} from 'ramda'
 
 const renderFields = field => <input-field className="field"
                                            id={field.id}
+                                           errorMessage={field.errorMessage}
+                                           required={field.required}
                                            label={field.label}
                                            type={field.type}
                                            value={field.value} />

@@ -1,5 +1,6 @@
 import {map, prop} from 'ramda'
 import {merge} from '../../helpers'
+import {log} from '../../utils'
 
 // const eventToFieldInput = ev => {
 //   return { key: ev.target.id, value: ev.target.value }
@@ -9,9 +10,9 @@ import {merge} from '../../helpers'
 //   merge(DOM.select(selector).events('blur'),
 //         DOM.select(selector).events('change'))
 
-const intent = ({DOM}) => ({
-  // fieldInput$: map(eventToFieldInput, onBlurAndChange(DOM, 'input')),
-  fieldChange$: map(prop('detail'), DOM.select('.field').events('newValue')),
+const intent = ({DOM}, inputFieldActions) => ({
+  fieldEdit$: map(log, inputFieldActions.edit$),
+
   postState$: DOM.select('.continue').events('click')
 })
 

@@ -2,15 +2,17 @@ import {Rx} from '@cycle/core'
 import R from 'ramda'
 
 export default {
-  mergeAll: m => m instanceof Rx.Observable ? m.mergeAll() : R.mergeAll(m),
+  combineLatest: Rx.Observable.combineLatest,
 
-  merge: (m, ...n) => m instanceof Rx.Observable ? Rx.Observable.merge(m, ...n) : R.merge(m, n[0]),
+  concat: R.curry((m, n) => m instanceof Rx.Observable ? m.concat(n) : R.concat(m, n)),
 
   fromEvent: (event, selector) => Rx.Observable.fromEvent(selector, event),
 
-  withLatestFrom: (f, observableA, observableB) => observableA.withLatestFrom(observableB, f),
+  head: m => m instanceof Rx.Observable ? m.first() : R.head(m),
 
-  combineLatest: Rx.Observable.combineLatest,
+  mergeAll: m => m instanceof Rx.Observable ? m.mergeAll() : R.mergeAll(m),
+
+  merge: (m, ...n) => m instanceof Rx.Observable ? Rx.Observable.merge(m, ...n) : R.merge(m, n[0]),
 
   scan: R.curry((f, a, m) => m instanceof Rx.Observable ? m.scan(f, a) : R.scan(f, a, m)),
 
@@ -18,7 +20,7 @@ export default {
 
   retry: num => observable => observable.retry(num),
 
-  head: m => m instanceof Rx.Observable ? m.first() : R.head(m),
+  rxJust: a => Rx.Observable.just(a),
 
-  rxJust: a => Rx.Observable.just(a)
+  withLatestFrom: (f, observableA, observableB) => observableA.withLatestFrom(observableB, f)
 }
