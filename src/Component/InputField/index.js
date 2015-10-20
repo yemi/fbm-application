@@ -11,13 +11,13 @@ const intent = (DOM, name = '') => ({
 })
 
 const model = (props$, actions) => {
-  const state$ = props$.map(props => ({props}))
+  const state$ = props$
   return state$
 }
 
 const view = (state$, name = '') => {
   return state$.map(state => {
-    const {label, id, required, key, type, value, errorMessage} = state.props
+    const {label, id, required, key, type, value, errorMessage} = state
     return (
       <div className={name}>
         <div>{label}</div>
@@ -35,7 +35,7 @@ const inputField = ({DOM, props$}, name = '') => {
 
   return {
     DOM: vtree$,
-    value$: state$
+    edit$: actions.valueChange$
   }
 }
 

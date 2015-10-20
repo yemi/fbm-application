@@ -1,10 +1,11 @@
 import {Rx} from '@cycle/core'
 import intent from './intent'
 import view from './view'
-import {map, mapObjIndexed} from 'ramda'
+import {nth, map, mapObjIndexed} from 'ramda'
 import {model} from './model'
 import {fetchDataResponse, postStateResponse, httpRequest} from './http'
 import {localStorageSink} from './localStorage'
+import {log} from '../../utils'
 import Footer from '../Footer'
 import Content from '../Content'
 import inputField from '../InputField'
@@ -24,12 +25,12 @@ const amendState = DOM => state => ({
 })
 
 const makeInputFieldActions = (typeInputFieldActions, amendedState$) => {
-  const mergeInputFieldActions = (_, actionKey) =>
-    amendedState$.flatMapLatest(state => {
+  const mergeInputFieldActions = (_, actionKey) => {
+    return amendedState$.flatMapLatest(state => {
       const step = nth(state.activeStep, state.steps)
-      console.log(step)
       return Rx.Observable.merge(step.fields.map(field => field.inputField[actionKey]))
     })
+  }
 
   return mapObjIndexed(mergeInputFieldActions, typeInputFieldActions)
 }
