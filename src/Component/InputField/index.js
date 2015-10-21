@@ -1,41 +1,46 @@
 /** @jsx hJSX */
 import {Rx} from '@cycle/core'
 import {hJSX} from '@cycle/dom'
-import {compose, map, prop} from 'ramda'
+import {compose, map, prop, path, pickAll} from 'ramda'
 import {combineLatest, merge, head, concat} from '../../helpers'
 import {log} from '../../utils'
 
+const onBlurAndChange = (DOM, selector) =>
+  merge(DOM.select(selector).events('blur'),
+        DOM.select(selector).events('change'))
+
+const targetValue = path(['target', 'value'])
+
 const intent = (DOM, name = '') => ({
-  valueChange$: DOM.select(`.${name} input`).events('change')
-    .map(ev => ev.target.value).map(log)
+  valueChange$: map(targetValue, onBlurAndChange(DOM, `.${name} input`))
 })
 
-const model = (props$, actions) => {
-  const state$ = props$
-  return state$
+const model = (actions, props$) => {
+  const amendedProps$ = combineLatest(props$, actions.valueChange$, (props, newValue) => {
+    const errorMessage = props.required && !newValue ? `${props.label} is required` : ''
+    const value = newValue
+    return { ...props, value, errorMessage }
+  })
+  return concat(props$, amendedProps$)
 }
 
-const view = (state$, name = '') => {
-  return state$.map(state => {
-    const {label, id, required, key, type, value, errorMessage} = state
-    return (
-      <div className={name}>
-        <div>{label}</div>
-        <input type={type} value={value ? value : ''} id={id} />
-        <div>{value}</div>
-      </div>
-    )
-  })
-}
+const view = (name = '') => map(({label, required, type, value, errorMessage}) => (
+  <div className={name}>
+    <div>{errorMessage || label}</div>
+    <input type={type} value={value ? value : ''} />
+    <div>{value}</div>
+  </div>
+))
 
 const inputField = ({DOM, props$}, name = '') => {
   const actions = intent(DOM, name)
-  const state$ = model(props$, actions)
-  const vtree$ = view(state$, name)
+  const state$ = model(actions, props$)
+  const edit$ = map(pickAll(['value', 'index', 'errorMessage']), state$).skip(1)
+  const vtree$ = view(name)(state$)
 
   return {
     DOM: vtree$,
-    edit$: actions.valueChange$
+    edit$: edit$
   }
 }
 

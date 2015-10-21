@@ -13,13 +13,6 @@ const defaultState = {
   routes: []
 }
 
-const updateFieldWithFieldInput = (fieldInput, fields) => {
-  const updatedFieldIndex = findIndex(propEq('key', fieldInput.key), fields)
-  const updateField = field => ({ ...field, value: fieldInput.value })
-  const updatedFields = adjust(updateField, updatedFieldIndex, fields)
-  return updatedFields
-}
-
 // const validateFieldFold = ({fields, hasValidationErrors}, field) => {
 //   if (field.required && !field.value) {
 //     return {
@@ -38,17 +31,18 @@ const updateFieldWithFieldInput = (fieldInput, fields) => {
 //     validateFieldFold, { fields:[], hasValidationErrors:false }, fields)
 
 const Operations = {
-
-  updateAndValidateFields: fieldInput => state => {
-    // const fieldsLens = lenses(state.activeStep).fields
-    // const fields = view(fieldsLens, state)
-    // const updatedFields = updateFieldWithFieldInput(fieldInput, fields)
+  updateFields: ({value, index, errorMessage}) => state => {
+    const fieldsLens = lenses(state.activeStep).fields
+    const fields = view(fieldsLens, state)
+    const updateField = field => ({ ...field, value, errorMessage })
+    const updatedFields = adjust(updateField, index, fields)
     // const validatedFields = validateFields(updatedFields)
     // const validatedState = set(fieldsLens, validatedFields.fields, state)
+    const newState = set(fieldsLens, updatedFields, state)
     // const newState = { ...validatedState, canContinue: not(validatedFields.hasValidationErrors) }
     // return newState
-    console.log(fieldInput)
-    return state
+    console.log(value, index)
+    return newState
   },
 
   setInitState: sourceData => state => {
@@ -97,7 +91,7 @@ const model = (actions, responses, proxies, route$, localStorageSource$) => {
   const sourceData$ = head(merge(responses.fetchDataResponse$, nonEmptyLocalStorage$))
 
   // Operations
-  // const updateAndValidateFields$ = map(Operations.updateAndValidateFields, actions.fieldChange$)
+  const updateFields$ = map(Operations.updateFields, actions.inputFieldEdit$)
   const postState$ = map(Operations.postState(proxies), actions.postState$)
   const setActiveStep$ = map(Operations.setActiveStep, route$)
   const onPostStateResponse$ = map(Operations.onPostStateResponse, responses.postStateResponse$)
@@ -110,7 +104,7 @@ const model = (actions, responses, proxies, route$, localStorageSource$) => {
   // All operations
   const allOperations$ = merge(
     initApp$,
-    // updateAndValidateFields$,
+    updateFields$,
     setActiveStep$,
     postState$,
     onPostStateResponse$
