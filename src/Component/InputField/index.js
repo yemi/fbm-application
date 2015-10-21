@@ -1,18 +1,14 @@
 /** @jsx hJSX */
 import {Rx} from '@cycle/core'
 import {hJSX} from '@cycle/dom'
-import {compose, map, prop, path, pickAll} from 'ramda'
+import {compose, map, prop, path, pick} from 'ramda'
 import {combineLatest, merge, head, concat} from '../../helpers'
 import {log} from '../../utils'
-
-const onBlurAndChange = (DOM, selector) =>
-  merge(DOM.select(selector).events('blur'),
-        DOM.select(selector).events('change'))
 
 const targetValue = path(['target', 'value'])
 
 const intent = (DOM, name = '') => ({
-  valueChange$: map(targetValue, onBlurAndChange(DOM, `.${name} input`))
+  valueChange$: map(targetValue, DOM.select(`.${name} input`).events('input'))
 })
 
 const model = (actions, props$) => {
@@ -35,12 +31,10 @@ const view = (name = '') => map(({label, required, type, value, errorMessage}) =
 const inputField = ({DOM, props$}, name = '') => {
   const actions = intent(DOM, name)
   const state$ = model(actions, props$)
-  const edit$ = map(pickAll(['value', 'index', 'errorMessage']), state$).skip(1)
   const vtree$ = view(name)(state$)
-
   return {
     DOM: vtree$,
-    edit$: edit$
+    edit$: state$.skip(1)
   }
 }
 
