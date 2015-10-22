@@ -24,7 +24,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "prebrowserify": "mkdirp dist",
-    "browserify": "browserify src/index.js -t babelify --outfile dist/main.js",
+    "browserify": "browserify src/app.js -t babelify --outfile dist/main.js",
     "start": "npm install && npm run browserify && echo 'OPEN index.html IN YOUR BROWSER'",
     "watch": "npm-watch"
   }

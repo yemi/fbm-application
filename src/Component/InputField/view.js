@@ -2,36 +2,31 @@
 import {hJSX} from '@cycle/dom'
 import {map} from 'ramda'
 
-const renderOption = field => option =>
+const renderInputOption = inputField => option =>
   <div>
-    <input type={field.type}
+    <input type={inputField.type}
            value={option.value}
-           id={field.key}
-           name={field.key}
-           checked={field.value === option.value} />
+           id={inputField.id}
+           name={inputField.id}
+           checked={inputField.value === option.value} />
 
-    <label htmlFor={field.key}>{option.name}</label>
+    <label htmlFor={inputField.id}>{option.label}</label>
   </div>
 
-const renderInput = field => {
-  if (field.options) {
-    return map(renderOption(field), field.options)
-  } else {
-    return <input type={field.type} value={field.value ? field.value : ''} id={field.key} />
-  }
-}
+const renderInput = ({type, value, id}) =>
+  <input type={type} value={value ? value : ''} id={id} />
 
-const renderField = field => {
-  const input = renderInput(field)
-  const errMsg = field.errMsg ? <div className="alert alert-danger">{field.errMsg}</div> : null
+const view = (name = '') => map(inputField => {
+  const input = inputField.options
+    ? map(renderInputOption(inputField), inputField.options)
+    : renderInput(inputField)
   return (
-    <div className="field">
-      <div>{field.name}</div>
+    <div className={name}>
+      <div>{inputField.errorMessage || inputField.label}</div>
       {input}
-      <div>{field.value}</div>
-      {errMsg}
+      <div>{inputField.value}</div>
     </div>
   )
-}
+})
 
-export default renderField
+export default view

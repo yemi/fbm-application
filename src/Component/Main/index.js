@@ -6,8 +6,6 @@ import {model} from './model'
 import {fetchDataResponse, postStateResponse, httpRequest} from './http'
 import {localStorageSink} from './localStorage'
 import {log} from '../../utils'
-import Footer from '../Footer'
-import Content from '../Content'
 import inputField from '../InputField'
 
 const amendState = DOM => state => ({
@@ -54,11 +52,8 @@ const main = sources => {
   const actions = intent(sources.DOM, proxyInputFieldActions)
   const request$ = httpRequest(proxies.postStateRequest$)
   const state$ = model(actions, responses, proxies, sources.Route, sources.LocalStorage)
-  // const content = Content(state$)
-  // const footer = Footer(state$)
   const amendedState$ = map(amendState(sources.DOM), state$).shareReplay(1)
   const inputFieldActions = makeInputFieldActions(typeInputFieldActions, amendedState$)
-  // const vTree$ = view(content.DOM, footer.DOM)
   const localStorageSink$ = localStorageSink(state$)
   const vTree$ = view(amendedState$)
   replicateAll(typeInputFieldActions, inputFieldActions, proxyInputFieldActions)

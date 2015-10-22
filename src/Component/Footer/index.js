@@ -13,27 +13,22 @@ const getLinks = state => {
   return { prevLink:Maybe.maybe('', identity, prevLink), nextLink:Maybe.maybe('', identity, nextLink) }
 }
 
-const renderFooter = state$ => {
-  const vTree$ = map(state => {
-    const {prevLink, nextLink} = getLinks(state)
-    const stepsIndicator = (state.activeStep + 1) + ' of ' + state.totalSteps
-    const loadingIndicator = state.loading ? <div className="alert alert-info pos-f-t m-t-lg">Loading</div> : null
+const renderFooter = state => {
+  const {prevLink, nextLink} = getLinks(state)
+  const stepsIndicator = (state.activeStep + 1) + ' of ' + state.totalSteps
+  const loadingIndicator = state.loading ? <div className="alert alert-info pos-f-t m-t-lg">Loading</div> : null
 
-    return (
-      <footer className="navbar navbar-fixed-bottom">
-        <div className="footer-inner btn-toolbar">
-          <a href={'#' + prevLink} className="back btn">Back</a>
-          <a href={'#' + nextLink} className={'continue btn btn-success ' + (state.canContinue ? '' : 'disabled')}>Continue</a>
-          <div className="m-t">{stepsIndicator}</div>
-          {loadingIndicator}
-        </div>
-      </footer>
-    )
-  }, state$)
-
-  return {
-    DOM: vTree$
-  }
+  return (
+    <footer className="navbar navbar-fixed-bottom">
+      <div className="footer-inner btn-toolbar">
+        <a href={'#' + prevLink} className="back btn">Back</a>
+        <a href={'#' + nextLink} className={'continue btn btn-success ' + (state.canContinue ? '' : 'disabled')}>Continue</a>
+        <div className="m-t">{stepsIndicator}</div>
+        {loadingIndicator}
+      </div>
+    </footer>
+  )
 }
+
 
 export default renderFooter
