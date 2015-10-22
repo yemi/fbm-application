@@ -7,9 +7,11 @@ const renderStep = state => {
   const fields = map(path(['inputField', 'DOM']), step.fields)
   return (
     <div>
-      <h1>{step.title}</h1>
-      <p>{step.subtitle}</p>
-      {fields}
+      <h1 className="mega tr1">{step.title}</h1>
+      <div className="h3 thin tr2">{step.subtitle}</div>
+      <div className="cell--xs center">
+        {fields}
+      </div>
     </div>
   )
 }

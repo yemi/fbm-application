@@ -6,9 +6,11 @@ import renderStep from '../Step'
 import renderFooter from '../Footer'
 
 const view = map(state =>
-  <div className="container page text-center">
-    {renderStep(state)}
-    {renderFooter(state)}
+  <div className="wrapper bgWhite">
+    <div className="cell textCenter pv80">
+      {renderStep(state)}
+      {renderFooter(state)}
+    </div>
   </div>
 )
 

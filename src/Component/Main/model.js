@@ -41,7 +41,6 @@ const Operations = {
     const newState = set(fieldsLens, updatedFields, state)
     // const newState = { ...validatedState, canContinue: not(validatedFields.hasValidationErrors) }
     // return newState
-    console.log(value, index)
     return newState
   },
 

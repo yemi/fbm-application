@@ -57,7 +57,6 @@ const main = sources => {
   const localStorageSink$ = localStorageSink(state$)
   const vTree$ = view(amendedState$)
   replicateAll(typeInputFieldActions, inputFieldActions, proxyInputFieldActions)
-
   return {
     DOM: vTree$,
     HTTP: request$,
