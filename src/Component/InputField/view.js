@@ -14,35 +14,54 @@ const renderInputOption = state => option =>
     <label htmlFor={state.id}>{option.label}</label>
   </div>
 
+const renderSelectInputOption = ({value, label}) =>
+  <option value={value}>{label}</option>
+
+const renderSelectInput = ({id, options}) => {
+  const selectOptions = map(renderSelectInputOption, options)
+  return (
+    <div>
+      <select name={id} id={id}>
+        {selectOptions}
+      </select>
+    </div>
+  )
+}
+
+const renderInputWithOptions = state =>
+  state.type === 'select'
+    ? renderSelectInput(state)
+    : map(renderInputOption(state), state.options)
+
 const renderInput = ({type, value, id}) =>
   <input type={type} value={value ? value : ''} id={id} className="input" />
 
-const getFormFieldClasses = ({type, value, focused}) => {
+const renderHelpTextToggle = state =>
+  <i className="formField-help icon icon--help" data-tooltip={state.helpText}>?</i>
+
+const getFormFieldClasses = ({type, value, errorMessage}, focus) => {
   const formFieldType = type === 'text' ? 'input' : type
-  const floatLabel = 'has-floatLabel ' + (type === 'radio' || type === 'checkbox' ? 'is-floating' : '')
-  const floatLabelState = value ? 'is-floating' : ''
-  const focusState = focused ? 'is-focused' : ''
-  return `formField formField--${formFieldType} ${floatLabel} ${floatLabelState} ${focusState} mb30`
+  const floatLabelContext = 'has-floatLabel'
+  const floatLabelState = type === 'radio' || type === 'checkbox' || value ? 'is-floating' : ''
+  const focusState = focus ? 'is-focused' : ''
+  const errorContext = errorMessage ? 'has-error' : ''
+  return `formField formField--${formFieldType} ${floatLabelContext} ${floatLabelState} ${focusState} ${errorContext} mb30`
 }
 
-const getLabelClasses = ({errorMessage}) => {
-  const error = errorMessage ? 'formField-label--error' : ''
-  return `formField-label ${error}`
-}
-
-const view = (state$, name = '') =>
-  map(state => {
-    const formFieldClasses = getFormFieldClasses(state)
-    const labelClasses = getLabelClasses(state)
-    const input = state.options ? map(renderInputOption(state), state.options) : renderInput(state)
+const view = (state$, focus$, name = '') =>
+  combineLatest(state$, focus$, (state, focus) => {
+    const formFieldClasses = getFormFieldClasses(state, focus)
+    const input = state.options ? renderInputWithOptions(state) : renderInput(state)
+    const helpTextToggle = state.helpText ? renderHelpTextToggle(state) : null
     return (
       <div id={name} className={formFieldClasses}>
-        <div className={labelClasses}>
+        <div className="formField-label">
           <label for={state.id}>{state.errorMessage || state.label}</label>
         </div>
         {input}
+        {helpTextToggle}
       </div>
     )
-  }, state$)
+  })
 
 export default view

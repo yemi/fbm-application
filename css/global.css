@@ -2388,6 +2388,12 @@ iframe {
   line-height: 2.0357142857142856rem;
   font-weight: 500;
 }
+.formField.has-error {
+  border-color: #e2364f;
+}
+.formField.has-error label {
+  color: #e2364f;
+}
 .formField-inputWrapper {
   position: relative;
 }
@@ -2450,9 +2456,6 @@ iframe {
 }
 .formField-label {
   pointer-events: none;
-}
-.formField-label--error label {
-  color: #e2364f;
 }
 .formField .errorlist {
   margin-top: 0.714285714285714rem;

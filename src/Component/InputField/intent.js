@@ -6,11 +6,17 @@ import {merge} from '../../helpers'
 const targetValue = path(['target', 'value'])
 
 const intent = (DOM, name = '') => ({
-  input$: map(targetValue, DOM.select(`#${name} input`).events('input')),
-  focused$: merge(
+  editInput$: map(targetValue, merge(
+    DOM.select(`#${name} input`).events('input'),
+    DOM.select(`#${name} select`).events('change')
+  )),
+
+  stopEdit$: DOM.select(`#${name} input, #${name} select`).events('change'),
+
+  focus$: merge(
     map(() => true, DOM.select(`#${name} input`).events('focus')),
     map(() => false, DOM.select(`#${name} input`).events('blur'))
-  )
+  ).startWith(false)
 })
 
 export default intent

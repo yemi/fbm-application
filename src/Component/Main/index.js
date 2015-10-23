@@ -23,13 +23,13 @@ const amendState = DOM => state => ({
 })
 
 const makeInputFieldActions = (typeInputFieldActions, amendedState$) => {
-  const mergeInputFieldActions = (_, actionKey) => {
+  const mergeInputFieldAction = (_, actionKey) => {
     return amendedState$.flatMapLatest(state => {
       const step = nth(state.activeStep, state.steps)
       return Rx.Observable.merge(step.fields.map(field => field.inputField[actionKey]))
     })
   }
-  return mapObjIndexed(mergeInputFieldActions, typeInputFieldActions)
+  return mapObjIndexed(mergeInputFieldAction, typeInputFieldActions)
 }
 
 const replicateAll = (objectStructure, realStreams, proxyStreams) => {
@@ -46,13 +46,12 @@ const main = sources => {
   const proxies = {
     postStateRequest$: new Rx.Subject()
   }
-
   const typeInputFieldActions = { edit$: null }
   const proxyInputFieldActions = mapObjIndexed(() => new Rx.Subject(), typeInputFieldActions)
   const actions = intent(sources.DOM, proxyInputFieldActions)
   const request$ = httpRequest(proxies.postStateRequest$)
   const state$ = model(actions, responses, proxies, sources.Route, sources.LocalStorage)
-  const amendedState$ = map(amendState(sources.DOM), state$).shareReplay(1)
+  const amendedState$ = map(amendState(sources.DOM), state$)
   const inputFieldActions = makeInputFieldActions(typeInputFieldActions, amendedState$)
   const localStorageSink$ = localStorageSink(state$)
   const vTree$ = view(amendedState$)
