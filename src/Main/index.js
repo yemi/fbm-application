@@ -5,8 +5,8 @@ import {nth, map, mapObjIndexed} from 'ramda'
 import {model} from './model'
 import {fetchDataResponse, postStateResponse, httpRequest} from './http'
 import {localStorageSink} from './localStorage'
-import {log} from '../../utils'
-import inputField from '../InputField'
+import {log} from '../utils'
+import inputField from '../Widget/InputField'
 
 const amendState = DOM => state => ({
   ...state,

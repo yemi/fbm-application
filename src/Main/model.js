@@ -1,8 +1,8 @@
 import {reduce, not, isEmpty, has, filter, view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, map, append, compose, prop, propEq, eqProps} from 'ramda'
 import {run, Rx} from '@cycle/core'
-import {log, lenses, mergeStateWithSourceData} from '../../utils'
-import {API_URL} from '../../config'
-import {head, withLatestFrom, scan, shareReplay, merge} from '../../helpers'
+import {log, lenses, mergeStateWithSourceData} from '../utils'
+import {API_URL} from '../config'
+import {head, withLatestFrom, scan, shareReplay, merge} from '../helpers'
 
 const defaultState = {
   loading: true,

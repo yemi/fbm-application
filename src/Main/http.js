@@ -1,8 +1,8 @@
 import {Rx} from '@cycle/core'
-import {API_URL} from '../../config'
-import {log, urlToRequestObjectWithHeaders} from '../../utils'
+import {API_URL} from '../config'
+import {log, urlToRequestObjectWithHeaders} from '../utils'
 import {has, compose, filter, propEq, prop, map, both} from 'ramda'
-import {mergeAll, merge, retry, rxJust} from '../../helpers'
+import {mergeAll, merge, retry, rxJust} from '../helpers'
 
 // Helpers
 
