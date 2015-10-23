@@ -1,7 +1,6 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
-import {combineLatest} from '../helpers'
-import {path, map, nth} from 'ramda'
+import {map} from 'ramda'
 import renderStep from '../Component/Step'
 import renderFooter from '../Component/Footer'
 
