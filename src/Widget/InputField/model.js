@@ -1,6 +1,7 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
 import {combineLatest, concat} from '../../helpers'
+import {log} from '../../utils'
 
 const model = (props$, actions) => {
   const amendedProps$ = combineLatest(props$, actions.editInput$, (props, newValue) => {

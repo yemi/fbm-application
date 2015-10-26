@@ -6,7 +6,7 @@ import {rxJust, combineLatest} from '../../helpers'
 const renderInputOption = state => option =>
   <div>
     <input type={state.type}
-           value={state.value}
+           value={option.value}
            id={state.id}
            name={state.id}
            checked={state.value === option.value} />
@@ -14,14 +14,16 @@ const renderInputOption = state => option =>
     <label htmlFor={state.id}>{option.label}</label>
   </div>
 
-const renderSelectInputOption = ({value, label}) =>
-  <option value={value}>{label}</option>
+const renderSelectInputOption = state => option => {
+  const selected = state.value === option.value
+  return <option value={option.value} selected={selected}>{option.label}</option>
+}
 
-const renderSelectInput = ({id, options}) => {
-  const selectOptions = map(renderSelectInputOption, options)
+const renderSelectInput = state => {
+  const selectOptions = map(renderSelectInputOption(state), state.options)
   return (
     <div>
-      <select name={id} id={id}>
+      <select name={state.id} id={state.id} >
         {selectOptions}
       </select>
     </div>
