@@ -8,8 +8,7 @@
     "@cycle/core": "^4.0.x",
     "@cycle/dom": "^6.0.x",
     "@cycle/http": "^5.0.x",
-    "ramda": "^0.17.1",
-    "ramda-fantasy": "^0.4.1"
+    "ramda": "^0.17.1"
   },
   "devDependencies": {
     "babel": "5.6.x",
@@ -19,12 +18,12 @@
     "npm-watch": "0.0.1"
   },
   "watch": {
-    "browserify": "src/**/*.js"
+    "browserify": "app/**/*.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "prebrowserify": "mkdirp dist",
-    "browserify": "browserify src/app.js -t babelify --outfile dist/main.js",
+    "browserify": "browserify app/app.js -t babelify --outfile dist/main.js",
     "start": "npm install && npm run browserify && echo 'OPEN index.html IN YOUR BROWSER'",
     "watch": "npm-watch"
   }
