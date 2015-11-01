@@ -20,9 +20,7 @@ const fetchDataResponse = compose(map(prop('body')), filter(has('body')), retry(
 
 // Post state response (POST)
 
-const cleanPostResponse = res => ({ success: res.statusCode === 200 })
-
-const postStateResponse = compose(map(cleanPostResponse), map(log), retry(3), mergeAll, filter(requestFilter('POST')))
+const postStateResponse = compose(map(log), retry(3), mergeAll, filter(requestFilter('POST')))
 
 
 // Http requests

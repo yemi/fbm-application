@@ -36,8 +36,8 @@ const makeInputFieldActions = (typeInputFieldActions, amendedState$) => {
     const inputFieldAction$ = merge(inputFieldActions)
     return inputFieldAction$
   }
-  const makeInputFieldAction$ = (_, actionKey) => flatMapLatest(getInputFieldAction$(actionKey), amendedState$)
-  const inputFieldActions = mapObjIndexed(makeInputFieldAction$, typeInputFieldActions)
+  const makeActionFromInputFields$ = (_, actionKey) => flatMapLatest(getInputFieldAction$(actionKey), amendedState$)
+  const inputFieldActions = mapObjIndexed(makeActionFromInputFields$, typeInputFieldActions)
   return inputFieldActions
 }
 
@@ -47,6 +47,7 @@ const replicateStruct = (objectStructure, realStreams, proxyStreams) => {
 }
 
 const main = sources => {
+  sources.History.map(log)
   const responses = {
     fetchDataResponse$: fetchDataResponse(sources.HTTP),
     postStateResponse$: postStateResponse(sources.HTTP)
@@ -58,7 +59,7 @@ const main = sources => {
   const proxyInputFieldActions = mapObjIndexed(() => new Rx.Subject(), typeInputFieldActions)
   const actions = intent(sources.DOM, proxyInputFieldActions)
   const request$ = httpRequest(proxies.postStateRequest$)
-  const state$ = model(actions, responses, proxies, sources.Route, sources.LocalStorage).shareReplay(1)
+  const state$ = model(actions, responses, proxies, sources.History, sources.LocalStorage).shareReplay(1)
   const localStorageSink$ = localStorageSink(state$)
   const amendedState$ = map(amendState(sources.DOM), state$).shareReplay(1)
   const vTree$ = view(amendedState$)
@@ -67,7 +68,8 @@ const main = sources => {
   return {
     DOM: vTree$,
     HTTP: request$,
-    LocalStorage: localStorageSink$
+    LocalStorage: localStorageSink$,
+    History: actions.url$
   }
 }
 

@@ -7,6 +7,7 @@
   "dependencies": {
     "@cycle/core": "^4.0.x",
     "@cycle/dom": "^6.0.x",
+    "@cycle/history": "^1.1.0",
     "@cycle/http": "^5.0.x",
     "ramda": "^0.17.1"
   },

@@ -15,8 +15,8 @@ const getPathToStep = (step, state) => {
 const getPrevAndNextLinks = state => {
   const prevStepPath = getPathToStep(state.activeStep - 1, state)
   const nextStepPath = getPathToStep(state.activeStep + 1, state)
-  const prevLink = `#${prevStepPath}`
-  const nextLink = `#${nextStepPath}`
+  const prevLink = `/${prevStepPath}`
+  const nextLink = `/${nextStepPath}`
   return {prevLink, nextLink}
 }
 

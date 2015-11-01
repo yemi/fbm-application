@@ -1,6 +1,6 @@
-import {reduce, not, isEmpty, has, filter, view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, none, and, map, append, compose, prop, propEq, eqProps} from 'ramda'
+import {replace, not, isEmpty, has, filter, view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, none, and, map, append, compose, prop, propEq, eqProps} from 'ramda'
 import {run, Rx} from '@cycle/core'
-import {log, log_, lenses, mergeStateWithSourceData} from '../utils'
+import {toUrl, log, log_, lenses, mergeStateWithSourceData} from '../utils'
 import {API_URL} from '../config'
 import {head, withLatestFrom, scan, shareReplay, merge} from '../helpers'
 
@@ -14,7 +14,7 @@ const defaultState = {
   postErrors: []
 }
 
-const makeUpdate$ = (actions, responses, proxies, route$, localStorageSource$) => {
+const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) => {
 
   // Convenience streams
 
@@ -41,15 +41,16 @@ const makeUpdate$ = (actions, responses, proxies, route$, localStorageSource$) =
     return newState
   }, sourceData$)
 
-  const setActiveStep$ = map(route => state => {
-    if (any(equals(route), state.routes)) {
-      const newStep = findIndex(propEq('slug', route), state.steps)
+  const setActiveStep$ = map(location => state => {
+    console.log(location)
+    if (any(equals(location.pathname), state.routes)) {
+      const newStep = findIndex(propEq('slug', replace('/', '', location.pathname)), state.steps)
       const newState = { ...state, activeStep: newStep }
       return newState
     } else {
       return state
     }
-  }, route$)
+  }, History)
 
   const makeOnSubmit$ = proxies => map(() => state => {
     if (state.canContinue) {
@@ -65,13 +66,12 @@ const makeUpdate$ = (actions, responses, proxies, route$, localStorageSource$) =
     }
   }, actions.submit$)
 
-  const onPostStateResponse$ = map(({err, success}) => state => {
-    const errs = [{ id: 'company-name', errMsg: 'Your company type should be aBBa' }]
-    if (errs) {
-      // const fieldsLens = lenses.fields(state.activeStep)
-      // const fields = view(fieldsLens, state)
-      return { ...state, postErrors: errs, loading: false }
-    }
+  const onPostStateResponse$ = map(res => state => {
+    // const errs = [{ id: 'company-name', errMsg: 'Your company type should be aBBa' }]
+    // if (err) {
+    //   return { ...state, postErrors: errs, loading: false }
+    // }
+    // proxies.change
     return { ...state, loading: false }
   }, responses.postStateResponse$)
 
@@ -91,8 +91,8 @@ const makeUpdate$ = (actions, responses, proxies, route$, localStorageSource$) =
   )
 }
 
-const model = (actions, responses, proxies, route$, localStorageSource$) => {
-  const update$ = makeUpdate$(actions, responses, proxies, route$, localStorageSource$)
+const model = (actions, responses, proxies, History, localStorageSource$) => {
+  const update$ = makeUpdate$(actions, responses, proxies, History, localStorageSource$)
   const stateFold = (state, update) => update(state)
   const state$ = scan(stateFold, defaultState, update$)
   const stateHasSteps = compose(not, isEmpty, prop('steps'))
