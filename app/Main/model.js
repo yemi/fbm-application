@@ -1,5 +1,7 @@
 import {replace, not, isEmpty, has, filter, view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, none, and, map, append, compose, prop, propEq, eqProps} from 'ramda'
 import {run, Rx} from '@cycle/core'
+import switchPath from 'switch-path'
+import routes from './routes'
 import {toUrl, log, log_, lenses, mergeStateWithSourceData} from '../utils'
 import {API_URL} from '../config'
 import {head, withLatestFrom, scan, shareReplay, merge} from '../helpers'
@@ -7,10 +9,14 @@ import {head, withLatestFrom, scan, shareReplay, merge} from '../helpers'
 const defaultState = {
   loading: true,
   activeStep: 0,
+  activeRoute: {
+    type: 'step',
+    key: 0
+  },
   canContinue: false,
   totalSteps: null,
   steps: [],
-  routes: [],
+  routes,
   postErrors: []
 }
 
@@ -41,15 +47,12 @@ const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) 
     return newState
   }, sourceData$)
 
-  const setActiveStep$ = map(location => state => {
-    console.log(location)
-    if (any(equals(location.pathname), state.routes)) {
-      const newStep = findIndex(propEq('slug', replace('/', '', location.pathname)), state.steps)
-      const newState = { ...state, activeStep: newStep }
-      return newState
-    } else {
-      return state
-    }
+  const handleRoute$ = map(location => state => {
+    const {value} = switchPath(location.pathname, state.routes)
+    const activeRoute = value
+    const activeStep = value.type === 'step' ? value.key : state.activeStep
+    const newState = { ...state, activeStep, activeRoute }
+    return newState
   }, History)
 
   const makeOnSubmit$ = proxies => map(() => state => {
@@ -77,15 +80,15 @@ const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) 
 
   // Combiners
 
-  const setInitStateAndStep = (setInitState, setActiveStep) => compose(setActiveStep, setInitState)
-  const initApp$ = withLatestFrom(setInitStateAndStep, setInitState$, setActiveStep$)
+  const setInitStateAndStep = (setInitState, handleRoute) => compose(handleRoute, setInitState)
+  const initApp$ = withLatestFrom(setInitStateAndStep, setInitState$, handleRoute$)
 
   // Merge all update functions
 
   return merge(
     initApp$,
     updateAndValidateFields$,
-    setActiveStep$,
+    handleRoute$,
     makeOnSubmit$(proxies),
     onPostStateResponse$
   )

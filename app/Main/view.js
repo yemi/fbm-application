@@ -1,13 +1,13 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
 import {map} from 'ramda'
-import renderStep from '../Component/Step'
+import renderPage from '../Component/Page'
 import renderFooter from '../Component/Footer'
 
 const view = map(state =>
   <div className="wrapper bgWhite solidTop">
     <div className="cell pv80">
-      {renderStep(state)}
+      {renderPage(state)}
       {renderFooter(state)}
     </div>
   </div>

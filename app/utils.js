@@ -29,7 +29,6 @@ const mergeStateWithSourceData = (state, sourceData) => {
     totalSteps: sourceData.steps.length,
     steps: sourceData.steps,
     loading: false,
-    routes: map(compose(toUrl, prop('slug')), sourceData.steps),
     canContinue: sourceData.canContinue || false
   }
   return newState
