@@ -21,12 +21,11 @@ const urlToRequestObjectWithHeaders = url => {
   }
 }
 
-const toUrl = path => `/${path}`
+const slash = path => `/${path}`
 
 const mergeStateWithSourceData = (state, sourceData) => {
   const newState = {
     ...state,
-    totalSteps: sourceData.steps.length,
     steps: sourceData.steps,
     loading: false,
     canContinue: sourceData.canContinue || false
@@ -52,7 +51,7 @@ export default {
   log_,
   urlToRequestObjectWithHeaders,
   mergeStateWithSourceData,
-  toUrl,
+  slash,
   lenses,
   removeMultipleSpaces
 }

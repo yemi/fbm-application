@@ -1,7 +1,7 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
 import {isEmpty, identity, max, min, nth, map, compose, prop} from 'ramda'
-import {log} from 'util'
+import {log, slash} from '../../utils'
 
 const getPathToStep = (step, state) => {
   const maxStep = state.steps.length - 1
@@ -12,12 +12,10 @@ const getPathToStep = (step, state) => {
   return stepPath
 }
 
-const getPrevAndNextLinks = state => {
-  const prevStepPath = getPathToStep(state.activeStep - 1, state)
-  const nextStepPath = getPathToStep(state.activeStep + 1, state)
-  const prevLink = `/${prevStepPath}`
-  const nextLink = `/${nextStepPath}`
-  return {prevLink, nextLink}
+const getPrevAndNextUrls = state => {
+  const prevStepUrl = slash(getPathToStep(state.activeStep - 1, state))
+  const nextStepUrl = slash(getPathToStep(state.activeStep + 1, state))
+  return {prevStepUrl, nextStepUrl}
 }
 
 const renderPostErrors = ({postErrors}) =>
@@ -27,7 +25,7 @@ const renderPostErrors = ({postErrors}) =>
 
 const renderStepIndicator = state => {
   const activeStep = state.activeStep + 1
-  const totalSteps = state.totalSteps
+  const totalSteps = state.steps.length
   return (
     <span className="h5 medium colorSubdue mh20">
       {activeStep} of {totalSteps}
@@ -35,7 +33,10 @@ const renderStepIndicator = state => {
   )
 }
 
-const prevLinkClasses = "button button--secondary mh05"
+const getPrevLinkClasses = state => {
+  const hidden = state.activeStep === 0 ? 'hidden' : ''
+  return `button button--secondary mh05 ${hidden}`
+}
 
 const getNextLinkClasses = state => {
   const disabled = state.canContinue ? '' : 'button--disabled'
@@ -43,27 +44,29 @@ const getNextLinkClasses = state => {
 }
 
 const getNextLinkId = state => {
-  const activeStepIsLastStep = state.activeStep === state.totalSteps - 1
+  const totalSteps = state.steps.length
+  const activeStepIsLastStep = state.activeStep === totalSteps - 1
   const id = activeStepIsLastStep ? 'submit' : 'stepContinue'
   return id
 }
 
 const renderFooter = state => {
-  const {prevLink, nextLink} = getPrevAndNextLinks(state)
-  const postErrors = isEmpty(state.postErrors) ? null : renderPostErrors(state)
+  const {prevStepUrl, nextStepUrl} = getPrevAndNextUrls(state)
+  const postErrors = true ? null : renderPostErrors(state) // TODO: Do post error check
   const stepIndicator = renderStepIndicator(state)
   const nextLinkClasses = getNextLinkClasses(state)
+  const prevLinkClasses = getPrevLinkClasses(state)
   const nextLinkId = getNextLinkId(state)
   return (
     <footer className="textCenter bgWhite pv20">
       {postErrors}
-      <a href={prevLink}
+      <a href={prevStepUrl}
          id="stepBack"
          className={prevLinkClasses}>
         Back
       </a>
       {stepIndicator}
-      <a href={state.canContinue ? nextLink : '#'}
+      <a href={state.canContinue ? nextStepUrl : '#'}
          id={nextLinkId}
          className={nextLinkClasses}>
         Continue

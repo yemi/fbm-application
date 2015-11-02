@@ -1,8 +1,8 @@
-import {replace, not, isEmpty, has, filter, view, set, lensProp, lensIndex, always, pick, adjust, findIndex, equals, any, none, and, map, append, compose, prop, propEq, eqProps} from 'ramda'
+import {assoc, omit, not, isEmpty, has, filter, view, set, pick, adjust, none, and, map, compose, prop, propEq} from 'ramda'
 import {run, Rx} from '@cycle/core'
 import switchPath from 'switch-path'
 import routes from './routes'
-import {toUrl, log, log_, lenses, mergeStateWithSourceData} from '../utils'
+import {slash, log, log_, lenses, mergeStateWithSourceData} from '../utils'
 import {API_URL} from '../config'
 import {head, withLatestFrom, scan, shareReplay, merge} from '../helpers'
 
@@ -10,14 +10,13 @@ const defaultState = {
   loading: true,
   activeStep: 0,
   activeRoute: {
-    type: 'step',
-    key: 0
+    type: '',
+    key: null
   },
   canContinue: false,
-  totalSteps: null,
   steps: [],
-  routes,
-  postErrors: []
+  fieldsErrors: {},
+  routes
 }
 
 const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) => {
@@ -29,16 +28,14 @@ const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) 
 
   // Update functions
 
-  const updateAndValidateFields$ = map(({value, fieldIndex, fieldGroupIndex, errorMessage}) => state => {
+  const updateFieldAndErrorCheck$ = map(({value, fieldIndex, fieldGroupIndex, errorMessage, id}) => state => {
+    const fieldsErrors = errorMessage ? assoc(id, errorMessage, state.fieldErrors) : omit(id, state.fieldErrors)
     const fieldsLens = lenses.fields(state.activeStep, fieldGroupIndex)
     const fields = view(fieldsLens, state)
     const updateField = field => ({ ...field, value, errorMessage })
     const updatedFields = adjust(updateField, fieldIndex, fields)
     const updatedFieldsState = set(fieldsLens, updatedFields, state)
-    const fieldsContainErrors = compose(none(compose(isEmpty, prop('errorMessage'))), filter(has('errorMessage')))
-    const requiredFieldsHaveValue = compose(none(compose(isEmpty, prop('value'))), filter(propEq('required', true)))
-    const canContinue = and(requiredFieldsHaveValue(updatedFields), not(fieldsContainErrors(updatedFields)))
-    const newState = { ...updatedFieldsState, canContinue }
+    const newState = { ...updatedFieldsState, canContinue: isEmpty(fieldsErrors) }
     return newState
   }, actions.inputFieldEdit$)
 
@@ -87,7 +84,7 @@ const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) 
 
   return merge(
     initApp$,
-    updateAndValidateFields$,
+    updateFieldAndErrorCheck$,
     handleRoute$,
     makeOnSubmit$(proxies),
     onPostStateResponse$
