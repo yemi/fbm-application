@@ -34,23 +34,23 @@ const mergeStateWithSourceData = (state, sourceData) => {
   return newState
 }
 
-const makeFieldGroupsLens = activeRoute =>
+const makeFieldGroupsLens = route =>
   compose(
     lensProp('pages'),
-    lensProp(activeRoute),
+    lensProp(route),
     lensProp('fieldGroups')
   )
 
-const makeFieldsLens = (activeRoute, fieldGroupIndex) =>
+const makeFieldsLens = (route, fieldGroupIndex) =>
   compose(
-    fieldGroupsLens(activeRoute),
+    makeFieldGroupsLens(route),
     lensIndex(fieldGroupIndex),
     lensProp('fields')
   )
 
 const lenses = {
-  fieldGroups: activeRoute => fieldGroupsLens(activeRoute),
-  fields: (activeRoute, fieldGroupIndex) => fieldsLens(activeRoute, fieldGroupIndex)
+  fieldGroups: route => makeFieldGroupsLens(route),
+  fields: (route, fieldGroupIndex) => makeFieldsLens(route, fieldGroupIndex)
 }
 
 const removeMultipleSpaces = replace(/\s\s+/g, ' ')
