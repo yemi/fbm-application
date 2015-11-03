@@ -12,6 +12,8 @@ export default {
 
   head: m => m instanceof Rx.Observable ? m.first() : R.head(m),
 
+  mapIndexed: R.curry((f, m) => m.map(f)),
+
   merge: (m, ...n) => m instanceof Rx.Observable || m instanceof Array ? Rx.Observable.merge(m, ...n) : R.merge(m, n[0]),
 
   mergeAll: m => m instanceof Rx.Observable ? m.mergeAll() : R.mergeAll(m),

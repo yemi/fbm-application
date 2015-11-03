@@ -4,38 +4,54 @@ import view from './view'
 import {assoc, prop, flatten, path, compose, map, mapObjIndexed} from 'ramda'
 import {model} from './model'
 import {fetchDataResponse, postStateResponse, httpRequest} from './http'
-import {log} from '../utils'
-import {merge, flatMapLatest, rxJust} from '../helpers'
+import {lenses, log} from '../utils'
+import {merge, flatMapLatest, mapIndexed, rxJust} from '../helpers'
 import inputField from '../Widget/InputField'
 
-const amendState = DOM => state => ({
-  ...state,
-  pages: assoc(state.activeRoute, {
-    ...prop(state.activeRoute, state.pages),
-    fieldGroups: prop(state.activeRoute, state.pages).fieldGroups.map((fieldGroup, i) => ({
-      ...fieldGroup,
-      fields: fieldGroup.fields.map((field, y) => {
-        const props$ = rxJust({ ...field, fieldGroupIndex: i, fieldIndex: y })
-        return {
-          ...field,
-          inputField: inputField({DOM, props$}, field.id)
-        }
-      })
-    }))
-  }, state.pages)
-})
+const amendState = DOM => state => {
+  const fieldGroupsLens = lenses.fieldGroups(state.activeRoute)
+  const makeInputFields = mapIndexed((fieldGroup, i) => ({
+    ...fieldGroup,
+    fields: fieldGroup.fields.map((field, y) => {
+      const props$ = rxJust({ ...field, fieldGroupIndex: i, fieldIndex: y })
+      return {
+        ...field,
+        inputField: inputField({DOM, props$}, field.id)
+      }
+    }
+  )}))
+
+  const newState = over(fieldGroupsLens, makeInputFields ,state)
+  return newState
+
+
+  // ...state,
+  // pages: assoc(state.activeRoute, {
+  //   ...prop(state.activeRoute, state.pages),
+  //   fieldGroups: prop(state.activeRoute, state.pages).fieldGroups.map((fieldGroup, i) => ({
+  //     ...fieldGroup,
+  //     fields: fieldGroup.fields.map((field, y) => {
+  //       const props$ = rxJust({ ...field, fieldGroupIndex: i, fieldIndex: y })
+  //       return {
+  //         ...field,
+  //         inputField: inputField({DOM, props$}, field.id)
+  //       }
+  //     })
+  //   }))
+  // }, state.pages)
+}
 
 const makeInputFieldActions = (typeInputFieldActions, amendedState$) => {
-  const getInputFieldAction$ = actionKey => state => {
+  const getActionFromInputFields$ = actionKey => state => {
     const page = prop(state.activeRoute, state.pages)
     const getInputFieldAction = path(['inputField', actionKey])
     const getActionsFromFields = compose(map(getInputFieldAction), prop('fields'))
     const getActionsFromFieldGroups = compose(flatten, map(getActionsFromFields), prop('fieldGroups'))
-    const inputFieldActions = getActionsFromFieldGroups(page)
-    const inputFieldAction$ = merge(inputFieldActions)
-    return inputFieldAction$
+    const actions = getActionsFromFieldGroups(page)
+    const action$ = merge(actions)
+    return action$
   }
-  const makeActionFromInputFields$ = (_, actionKey) => flatMapLatest(getInputFieldAction$(actionKey), amendedState$)
+  const makeActionFromInputFields$ = (_, actionKey) => flatMapLatest(getActionFromInputFields$(actionKey), amendedState$)
   const inputFieldActions = mapObjIndexed(makeActionFromInputFields$, typeInputFieldActions)
   return inputFieldActions
 }
@@ -46,7 +62,6 @@ const replicateStruct = (objectStructure, realStreams, proxyStreams) => {
 }
 
 const main = sources => {
-  sources.History.map(log)
   const responses = {
     fetchDataResponse$: fetchDataResponse(sources.HTTP),
     postStateResponse$: postStateResponse(sources.HTTP)
@@ -59,7 +74,6 @@ const main = sources => {
   const actions = intent(sources.DOM, proxyInputFieldActions)
   const request$ = httpRequest(proxies.postStateRequest$)
   const state$ = model(actions, responses, proxies, sources.History, sources.LocalStorage).shareReplay(1)
-  // const localStorageSink$ = localStorageSink(state$)
   const amendedState$ = map(amendState(sources.DOM), state$).shareReplay(1)
   const vTree$ = view(amendedState$)
   const inputFieldActions = makeInputFieldActions(typeInputFieldActions, amendedState$)
