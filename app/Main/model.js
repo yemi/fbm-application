@@ -1,36 +1,31 @@
-import {assoc, omit, not, isEmpty, has, filter, view, set, pick, adjust, none, and, map, compose, prop, propEq} from 'ramda'
+import {replace, assoc, dissoc, not, isEmpty, has, filter, view, set, pick, adjust, none, and, map, compose, prop, propEq} from 'ramda'
 import {run, Rx} from '@cycle/core'
-import switchPath from 'switch-path'
-import routes from './routes'
 import {slash, log, log_, lenses, mergeStateWithSourceData} from '../utils'
 import {API_URL} from '../config'
-import {head, withLatestFrom, scan, shareReplay, merge} from '../helpers'
+import {concat, head, withLatestFrom, scan, shareReplay, merge} from '../helpers'
 
 const defaultState = {
   loading: true,
   activeStep: 0,
-  activeRoute: {
-    type: '',
-    key: null
-  },
+  activeRoute: '',
   canContinue: false,
-  steps: [],
-  fieldsErrors: {},
-  routes
+  pages: {},
+  totalSteps: null,
+  fieldsErrors: {}
 }
 
 const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) => {
 
   // Convenience streams
 
-  const nonEmptyLocalStorage$ = filter(has('steps'), localStorageSource$)
+  const nonEmptyLocalStorage$ = filter(has('pages'), localStorageSource$)
   const sourceData$ = head(merge(responses.fetchDataResponse$, nonEmptyLocalStorage$))
 
   // Update functions
 
   const updateFieldAndErrorCheck$ = map(({value, fieldIndex, fieldGroupIndex, errorMessage, id}) => state => {
-    const fieldsErrors = errorMessage ? assoc(id, errorMessage, state.fieldErrors) : omit(id, state.fieldErrors)
-    const fieldsLens = lenses.fields(state.activeStep, fieldGroupIndex)
+    const fieldsErrors = errorMessage ? assoc(id, errorMessage, state.fieldErrors) : dissoc(id, state.fieldErrors)
+    const fieldsLens = lenses.fields(state.activeRoute, fieldGroupIndex)
     const fields = view(fieldsLens, state)
     const updateField = field => ({ ...field, value, errorMessage })
     const updatedFields = adjust(updateField, fieldIndex, fields)
@@ -45,9 +40,10 @@ const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) 
   }, sourceData$)
 
   const handleRoute$ = map(location => state => {
-    const {value} = switchPath(location.pathname, state.routes)
-    const activeRoute = value
-    const activeStep = value.type === 'step' ? value.key : state.activeStep
+    const pathSegment = replace('/', '', location.pathname)
+    const activeRoute = pathSegment ? pathSegment : 'company-basics'
+    const activePage = prop(activeRoute, state.pages)
+    const activeStep = activePage.type === 'step' ? activePage.index : state.activeStep
     const newState = { ...state, activeStep, activeRoute }
     return newState
   }, History)
@@ -57,7 +53,7 @@ const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) 
       proxies.postStateRequest$.onNext({
         url: `${API_URL}/application`,
         method: 'POST',
-        send: map(pick(['slug', 'fields']), state.steps)
+        send: map(pick(['slug', 'fields']), state.pages)
       })
       const newState = { ...state, loading: true, postErrors: [] }
       return newState
@@ -78,14 +74,13 @@ const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) 
   // Combiners
 
   const setInitStateAndStep = (setInitState, handleRoute) => compose(handleRoute, setInitState)
-  const initApp$ = withLatestFrom(setInitStateAndStep, setInitState$, handleRoute$)
+  const initApp$ = head(withLatestFrom(setInitStateAndStep, setInitState$, handleRoute$))
 
   // Merge all update functions
 
   return merge(
-    initApp$,
+    concat(initApp$, handleRoute$),
     updateFieldAndErrorCheck$,
-    handleRoute$,
     makeOnSubmit$(proxies),
     onPostStateResponse$
   )

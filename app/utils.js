@@ -26,7 +26,8 @@ const slash = path => `/${path}`
 const mergeStateWithSourceData = (state, sourceData) => {
   const newState = {
     ...state,
-    steps: sourceData.steps,
+    pages: prop('pages', sourceData),
+    totalSteps: prop('total-steps', sourceData) || prop('totalSteps', sourceData),
     loading: false,
     canContinue: sourceData.canContinue || false
   }
@@ -34,10 +35,10 @@ const mergeStateWithSourceData = (state, sourceData) => {
 }
 
 const lenses = {
-  fields: (activeStep, fieldGroupIndex) =>
+  fields: (activeRoute, fieldGroupIndex) =>
     compose(
-      lensProp('steps'),
-      lensIndex(activeStep),
+      lensProp('pages'),
+      lensProp(activeRoute),
       lensProp('fieldGroups'),
       lensIndex(fieldGroupIndex),
       lensProp('fields')

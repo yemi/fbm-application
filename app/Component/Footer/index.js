@@ -1,14 +1,18 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
-import {isEmpty, identity, max, min, nth, map, compose, prop} from 'ramda'
+import {head, keys, pickBy, isEmpty, identity, max, min, nth, map, compose, both, equals, prop, propEq} from 'ramda'
 import {log, slash} from '../../utils'
 
-const getPathToStep = (step, state) => {
-  const maxStep = state.steps.length - 1
-  const minStep = 0
-  const safeStep = step > state.activeStep ? min(maxStep, step) : max(minStep, step)
-  const getStepPath = compose(prop('slug'), nth(safeStep))
-  const stepPath = getStepPath(state.steps)
+const getPathToStep = (targetStepIndex, state) => {
+  const maxStepIndex = state.totalSteps - 1
+  const minStepIndex = 0
+  const safeStepIndex = targetStepIndex > state.activeStep
+    ? min(maxStepIndex, targetStepIndex)
+    : max(minStepIndex, targetStepIndex)
+  const isPageStep = propEq('type', 'step')
+  const hasTargetStepIndex = compose(equals(safeStepIndex), prop('index'))
+  const getStepPath = compose(head, keys, pickBy(both(isPageStep, hasTargetStepIndex)))
+  const stepPath = getStepPath(state.pages)
   return stepPath
 }
 
@@ -25,10 +29,9 @@ const renderPostErrors = ({postErrors}) =>
 
 const renderStepIndicator = state => {
   const activeStep = state.activeStep + 1
-  const totalSteps = state.steps.length
   return (
     <span className="h5 medium colorSubdue mh20">
-      {activeStep} of {totalSteps}
+      {activeStep} of {state.totalSteps}
     </span>
   )
 }
@@ -44,8 +47,7 @@ const getNextLinkClasses = state => {
 }
 
 const getNextLinkId = state => {
-  const totalSteps = state.steps.length
-  const activeStepIsLastStep = state.activeStep === totalSteps - 1
+  const activeStepIsLastStep = state.activeStep === state.totalSteps - 1
   const id = activeStepIsLastStep ? 'submit' : 'stepContinue'
   return id
 }
