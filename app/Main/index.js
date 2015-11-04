@@ -4,7 +4,7 @@ import view from './view'
 import {filter, over, assoc, prop, flatten, path, compose, map} from 'ramda'
 import {model} from './model'
 import {getFetchDataResponse$, getPostStateResponse$, makeHttpRequest$} from './http'
-import {makePostStateRequestObject, replicateStream, lenses, log} from '../utils'
+import {isSuccessfulHttpResponse, makePostStateRequestObject, replicateStream, lenses, log} from '../utils'
 import {withLatestFrom, merge, flatMapLatest, mapIndexed, rxJust} from '../helpers'
 import inputField from '../Widget/InputField'
 
@@ -54,15 +54,11 @@ const main = sources => {
   }
   const actions = intent(sources.DOM, proxies.inputField)
   const state$ = model(actions, responses, sources.History, sources.LocalStorage).shareReplay(1)
-
   const getPostStateRequestObject = (_, state) => makePostStateRequestObject(state)
   const postStateRequest$ = withLatestFrom(getPostStateRequestObject, actions.submit$, state$)
   const request$ = makeHttpRequest$(postStateRequest$)
-
-  const getPostStateResponseUrl$ = responses.getPostStateResponse$
-    .filter(res => res.statusCode === 200)
-    .map(res => '/application-sent')
-
+  const makeSuccessUrl$ = compose(map(res => `/application-sent`), filter(isSuccessfulHttpResponse))
+  const successUrl$ = makeSuccessUrl$(responses.getPostStateResponse$)
   const amendedState$ = map(amendState(sources.DOM), state$).shareReplay(1)
   const vTree$ = view(amendedState$)
   const inputFieldEdit$ = makeInputFieldAction$('edit$', amendedState$)
@@ -71,7 +67,7 @@ const main = sources => {
     DOM: vTree$,
     HTTP: request$,
     LocalStorage: state$,
-    History: merge(actions.url$, getPostStateResponseUrl$)
+    History: merge(actions.url$, successUrl$)
   }
 }
 

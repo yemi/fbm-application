@@ -29,6 +29,8 @@ const makePostStateRequestObject = state => {
   return requestObject
 }
 
+const isSuccessfulHttpResponse = res => res.statusCode === 200
+
 const slash = path => `/${path}`
 
 const mergeStateWithSourceData = (state, sourceData) => {
@@ -71,6 +73,7 @@ export default {
   makeRequestObject,
   makePostStateRequestObject,
   mergeStateWithSourceData,
+  isSuccessfulHttpResponse,
   slash,
   lenses,
   removeMultipleSpaces,
