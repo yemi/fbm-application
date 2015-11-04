@@ -11,15 +11,16 @@ const defaultState = {
   canContinue: false,
   pages: {},
   totalSteps: null,
-  fieldsErrors: {}
+  fieldsErrors: {},
+  isSubmitted: false
 }
 
-const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) => {
+const makeUpdate$ = (actions, responses, History, localStorageSource$) => {
 
   // Convenience streams
 
   const nonEmptyLocalStorage$ = filter(has('pages'), localStorageSource$)
-  const sourceData$ = head(merge(responses.fetchDataResponse$, nonEmptyLocalStorage$))
+  const sourceData$ = head(merge(responses.getFetchDataResponse$, nonEmptyLocalStorage$))
 
   // Update functions
 
@@ -48,28 +49,20 @@ const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) 
     return newState
   }, History)
 
-  const makeOnSubmit$ = proxies => map(() => state => {
-    if (state.canContinue) {
-      proxies.postStateRequest$.onNext({
-        url: `${API_URL}/application`,
-        method: 'POST',
-        send: map(pick(['slug', 'fields']), state.pages)
-      })
-      const newState = { ...state, loading: true, postErrors: [] }
-      return newState
-    } else {
-      return state
-    }
+  const onSubmit$ = map(() => state => {
+    const newState = { ...state, loading: true, postErrors: [] }
+    return state.canContinue ? newState : state
   }, actions.submit$)
 
-  const onPostStateResponse$ = map(res => state => {
+  const ongetPostStateResponse$ = map(res => state => {
     // const errs = [{ id: 'company-name', errMsg: 'Your company type should be aBBa' }]
     // if (err) {
     //   return { ...state, postErrors: errs, loading: false }
     // }
-    // proxies.change
-    return { ...state, loading: false }
-  }, responses.postStateResponse$)
+    const pages = merge(state.pages, res.body)
+    const newState = { ...state, pages, loading: false }
+    return newState
+  }, responses.getPostStateResponse$)
 
   // Combiners
 
@@ -81,13 +74,13 @@ const makeUpdate$ = (actions, responses, proxies, History, localStorageSource$) 
   return merge(
     concat(initApp$, handleRoute$),
     updateFieldAndErrorCheck$,
-    makeOnSubmit$(proxies),
-    onPostStateResponse$
+    onSubmit$,
+    ongetPostStateResponse$
   )
 }
 
-const model = (actions, responses, proxies, History, localStorageSource$) => {
-  const update$ = makeUpdate$(actions, responses, proxies, History, localStorageSource$)
+const model = (actions, responses, History, localStorageSource$) => {
+  const update$ = makeUpdate$(actions, responses, History, localStorageSource$)
   const stateFold = (state, update) => update(state)
   const state$ = scan(stateFold, defaultState, update$)
   const stateHasSteps = compose(not, isEmpty, prop('steps'))

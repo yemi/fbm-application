@@ -1,6 +1,6 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
-import {head, keys, pickBy, isEmpty, identity, max, min, nth, map, compose, both, equals, prop, propEq} from 'ramda'
+import {not, head, keys, pickBy, isEmpty, identity, max, min, nth, map, compose, both, equals, prop, propEq} from 'ramda'
 import {log, slash} from '../../utils'
 
 const getPathToStep = (targetStepIndex, state) => {
@@ -46,9 +46,10 @@ const getNextLinkClasses = state => {
   return `button ${disabled} mh05`
 }
 
+const activeStepIsLastStep = state => state.activeStep === state.totalSteps - 1
+
 const getNextLinkId = state => {
-  const activeStepIsLastStep = state.activeStep === state.totalSteps - 1
-  const id = activeStepIsLastStep ? 'submit' : 'stepContinue'
+  const id = activeStepIsLastStep(state) ? 'submit' : 'stepContinue'
   return id
 }
 
@@ -68,7 +69,7 @@ const renderFooter = state => {
         Back
       </a>
       {stepIndicator}
-      <a href={state.canContinue ? nextStepUrl : '#'}
+      <a href={state.canContinue && not(activeStepIsLastStep(state)) ? nextStepUrl : '#'}
          id={nextLinkId}
          className={nextLinkClasses}>
         Continue

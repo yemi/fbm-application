@@ -1,4 +1,5 @@
-import {replace, curry, map, prop, compose, lensProp, lensIndex} from 'ramda'
+import {pick, replace, curry, map, prop, compose, lensProp, lensIndex} from 'ramda'
+import {API_URL} from './config'
 
 const log = a => {
   console.log(a);
@@ -10,15 +11,22 @@ const log_ = curry((desc, a) => {
   return a
 })
 
-const urlToRequestObjectWithHeaders = url => {
-  return {
-    url: url,
-    method: 'GET',
-    accept: 'json',
-    headers: {
-      'Content-Type': 'application/json',
-    }
+const makeRequestObject = (method, url, query) => ({
+  url: url,
+  method: method,
+  query: query || {},
+  accept: 'json',
+  headers: {
+    'Content-Type': 'application/json',
   }
+})
+
+const makePostStateRequestObject = state => {
+  const postState = map(pick(['fieldGroups']), state.pages)
+  const url = `${API_URL}/application`
+  const method = 'POST'
+  const requestObject = makeRequestObject(method, url, postState)
+  return requestObject
 }
 
 const slash = path => `/${path}`
@@ -55,12 +63,16 @@ const lenses = {
 
 const removeMultipleSpaces = replace(/\s\s+/g, ' ')
 
+const replicateStream = (origin$, proxy$) => origin$.subscribe(proxy$.asObserver())
+
 export default {
   log,
   log_,
-  urlToRequestObjectWithHeaders,
+  makeRequestObject,
+  makePostStateRequestObject,
   mergeStateWithSourceData,
   slash,
   lenses,
-  removeMultipleSpaces
+  removeMultipleSpaces,
+  replicateStream
 }

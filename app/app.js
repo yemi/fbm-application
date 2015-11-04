@@ -9,5 +9,7 @@ run(main, {
   DOM: makeDOMDriver('#app'),
   HTTP: makeHTTPDriver(),
   LocalStorage: makeLocalStorageDriver('fbm-application'),
-  History: makeHistoryDriver()
+  History: makeHistoryDriver({
+    hash: true
+  })
 })

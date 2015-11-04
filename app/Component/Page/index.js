@@ -24,7 +24,7 @@ const renderFormPage = page => {
   )
 }
 
-const renderStaticPage = page =>
+const renderGenericPage = page =>
   <div>
     <h2 className="mega textCenter tr1">{page.title}</h2>
     <div className="h3 thin textCenter tr2">{page.subtitle}</div>
@@ -32,9 +32,9 @@ const renderStaticPage = page =>
 
 const renderPage = state => {
   const activePage = prop(state.activeRoute, state.pages)
+  console.log(activePage.type)
   switch (activePage.type) {
-    case 'page': return renderStaticPage(activePage);
-    default:
+    case 'generic': return renderGenericPage(activePage);
     case 'step': return renderFormPage(activePage);
   }
 }
