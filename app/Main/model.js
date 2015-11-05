@@ -20,7 +20,7 @@ const makeUpdate$ = (actions, responses, History, localStorageSource$) => {
   // Convenience streams
 
   const nonEmptyLocalStorage$ = filter(has('pages'), localStorageSource$)
-  const sourceData$ = head(merge(responses.getFetchDataResponse$, nonEmptyLocalStorage$))
+  const sourceData$ = head(merge(responses.fetchDataResponse$, nonEmptyLocalStorage$))
 
   // Update functions
 
@@ -62,7 +62,7 @@ const makeUpdate$ = (actions, responses, History, localStorageSource$) => {
     const pages = merge(state.pages, res.body)
     const newState = { ...state, pages, loading: false }
     return newState
-  }, responses.getPostStateResponse$)
+  }, responses.postStateResponse$)
 
   // Combiners
 

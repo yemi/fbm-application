@@ -17,9 +17,9 @@ const renderFormPage = page => {
     <div>
       <h2 className="mega textCenter tr1">{page.title}</h2>
       <div className="h3 thin textCenter tr2">{page.subtitle}</div>
-      <div className="cell--xs center">
+      <form className="cell--xs center">
         {fieldGroups}
-      </div>
+      </form>
     </div>
   )
 }

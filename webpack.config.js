@@ -9,7 +9,7 @@ module.exports = {
     filename: '[name].js',
     publicPath: '/'
   },
-  devtool: 'eval-source-map',
+  devtool: 'source-map',
   module: {
     loaders: [
       {

@@ -44,8 +44,8 @@ const makeInputFieldAction$ = (actionKey, amendedState$) => {
 
 const main = sources => {
   const responses = {
-    getFetchDataResponse$: getFetchDataResponse$(sources.HTTP),
-    getPostStateResponse$: getPostStateResponse$(sources.HTTP)
+    fetchDataResponse$: getFetchDataResponse$(sources.HTTP),
+    postStateResponse$: getPostStateResponse$(sources.HTTP)
   }
   const proxies = {
     inputField: {
@@ -58,7 +58,7 @@ const main = sources => {
   const postStateRequest$ = withLatestFrom(getPostStateRequestObject, actions.submit$, state$)
   const request$ = makeHttpRequest$(postStateRequest$)
   const makeSuccessUrl$ = compose(map(res => `/application-sent`), filter(isSuccessfulHttpResponse))
-  const successUrl$ = makeSuccessUrl$(responses.getPostStateResponse$)
+  const successUrl$ = makeSuccessUrl$(responses.postStateResponse$)
   const amendedState$ = map(amendState(sources.DOM), state$).shareReplay(1)
   const vTree$ = view(amendedState$)
   const inputFieldEdit$ = makeInputFieldAction$('edit$', amendedState$)
