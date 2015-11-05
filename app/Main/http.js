@@ -25,7 +25,7 @@ const getPostStateResponse$ = compose(map(log), retry(3), mergeAll, filter(reque
 
 // Http requests
 
-const initialApplicationRequest$ = map(makeRequestObject('GET'), rxJust(`${API_URL}/application`))
+const initialApplicationRequest$ = map(makeRequestObject('GET', null), rxJust(`${API_URL}/application`))
 
 const makeHttpRequest$ = (...otherRequest$) => merge(initialApplicationRequest$, ...otherRequest$)
 

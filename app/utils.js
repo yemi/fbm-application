@@ -11,7 +11,7 @@ const log_ = curry((desc, a) => {
   return a
 })
 
-const makeRequestObject = (method, url, query) => ({
+const makeRequestObject = curry((method, query, url) => ({
   url: url,
   method: method,
   query: query || {},
@@ -19,13 +19,13 @@ const makeRequestObject = (method, url, query) => ({
   headers: {
     'Content-Type': 'application/json',
   }
-})
+}))
 
 const makePostStateRequestObject = state => {
   const postState = map(pick(['fieldGroups']), state.pages)
   const url = `${API_URL}/application`
   const method = 'POST'
-  const requestObject = makeRequestObject(method, url, postState)
+  const requestObject = makeRequestObject(method, postState, url)
   return requestObject
 }
 

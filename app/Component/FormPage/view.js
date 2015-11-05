@@ -11,13 +11,12 @@ const renderFieldGroup = fieldGroup => {
   )
 }
 
-const view = map(state => {
-  const activePage = prop(state.activeRoute, state.pages)
-  const fieldGroups = map(renderFieldGroup, activePage.fieldGroups)
+const view = map(page => {
+  const fieldGroups = map(renderFieldGroup, page.fieldGroups)
   return (
     <div>
-      <h2 className="mega textCenter tr1">{activePage.title}</h2>
-      <div className="h3 thin textCenter tr2">{activePage.subtitle}</div>
+      <h2 className="mega textCenter tr1">{page.title}</h2>
+      <div className="h3 thin textCenter tr2">{page.subtitle}</div>
       <form className="cell--xs center">
         {fieldGroups}
       </form>

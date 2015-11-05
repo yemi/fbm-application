@@ -87,4 +87,4 @@ const model = (actions, responses, History, localStorageSource$) => {
   return filter(stateHasSteps, state$)
 }
 
-export default {model}
+export default model
