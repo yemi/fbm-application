@@ -1,12 +1,9 @@
 import {Rx} from '@cycle/core'
-import intent from './intent'
 import view from './view'
 import {filter, over, assoc, prop, flatten, path, compose, map} from 'ramda'
-import {model} from './model'
-import {getFetchDataResponse$, getPostStateResponse$, makeHttpRequest$} from './http'
-import {isSuccessfulHttpResponse, makePostStateRequestObject, replicateStream, lenses, log} from '../utils'
-import {withLatestFrom, merge, flatMapLatest, mapIndexed, rxJust} from '../helpers'
-import inputField from '../Widget/InputField'
+import {lenses} from '../../utils'
+import {merge, flatMapLatest, mapIndexed, rxJust} from '../../helpers'
+import inputField from '../../Widget/InputField'
 
 const amendState = DOM => state => {
   const activePage = prop(state.activeRoute, state.pages)
@@ -39,16 +36,13 @@ const makeInputFieldAction$ = (actionKey, amendedState$) => {
   return inputFieldAction$
 }
 
-const main = props => {
-  const amendedState$ = map(amendState(props.DOM), state$).shareReplay(1)
+const main = (DOM, state$) => {
+  const amendedState$ = map(amendState(DOM), state$).shareReplay(1)
   const vTree$ = view(amendedState$)
   const inputFieldEdit$ = makeInputFieldAction$('edit$', amendedState$)
-  replicateStream(inputFieldEdit$, proxies.inputField.edit$)
   return {
     DOM: vTree$,
-    HTTP: request$,
-    LocalStorage: state$,
-    History: merge(actions.url$, successUrl$)
+    inputFieldEdit$: inputFieldEdit$
   }
 }
 

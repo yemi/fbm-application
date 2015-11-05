@@ -1,16 +1,24 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
-import {map} from 'ramda'
-import renderPage from '../Component/Page'
+import {map, prop} from 'ramda'
 import renderFooter from '../Component/Footer'
+import {combineLatest} from '../helpers'
 
-const view = map(state =>
-  <div className="wrapper bgWhite solidTop">
-    <div className="cell pv80">
-      {renderPage(state)}
-      {renderFooter(state)}
+const renderPage = (state, formPageVTree, genericPageVTree) => {
+  const activePage = prop(state.activeRoute, state.pages)
+  const page = activePage.type === 'step' ? formPageVTree : genericPageVTree
+  return page
+}
+
+const view = (state$, formPageVTree$, genericPageVTree$) =>
+  combineLatest(state$, formPageVTree$, genericPageVTree$, (state, formPageVTree, genericPageVTree) =>
+    <div className="wrapper bgWhite solidTop">
+      <div className="cell pv80">
+        {renderPage(state, formPageVTree, genericPageVTree)}
+        {renderFooter(state)}
+      </div>
     </div>
-  </div>
-)
+  )
+
 
 export default view

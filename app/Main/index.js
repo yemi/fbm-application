@@ -6,6 +6,8 @@ import {model} from './model'
 import {getFetchDataResponse$, getPostStateResponse$, makeHttpRequest$} from './http'
 import {isSuccessfulHttpResponse, makePostStateRequestObject, replicateStream, lenses, log} from '../utils'
 import {withLatestFrom, merge, flatMapLatest, mapIndexed, rxJust} from '../helpers'
+import FormPage from '../Component/FormPage'
+import GenericPage from '../Component/GenericPage'
 
 const main = sources => {
   const responses = {
@@ -13,13 +15,13 @@ const main = sources => {
     postStateResponse$: getPostStateResponse$(sources.HTTP)
   }
 
-  const proxyState$ = Rx.replaySubject(1)
+  const proxyState$ = new Rx.ReplaySubject(1)
   const formPage = FormPage(sources.DOM, proxyState$)
-  const genericPage = GenericPage(sources.DOM, proxyState$)
+  const genericPage = GenericPage(proxyState$)
 
-  const actions = intent(sources.DOM, formPage.inputFieldEdit$)
+  const actions = intent(sources.DOM, formPage)
   const state$ = model(actions, responses, sources.History, sources.LocalStorage).shareReplay(1)
-  const vTree$ = view(formPage.DOM, genericPage.DOM)
+  const vTree$ = view(state$, formPage.DOM, genericPage.DOM)
 
   const getPostStateRequestObject = (_, state) => makePostStateRequestObject(state)
   const postStateRequest$ = withLatestFrom(getPostStateRequestObject, actions.submit$, state$)
