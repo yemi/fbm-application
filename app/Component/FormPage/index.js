@@ -4,7 +4,7 @@ import {filter, prop, flatten, path, compose, equals, map} from 'ramda'
 import {merge, flatMapLatest, mapIndexed, rxJust} from '../../helpers'
 import inputField from '../../Widget/InputField'
 
-const amendPropsWithChildren = DOM => props => {
+const amendPageWithChildren = DOM => page => {
   const fieldGroups = mapIndexed((fieldGroup, i) => ({
     ...fieldGroup,
     fields: fieldGroup.fields.map((field, y) => {
@@ -14,30 +14,30 @@ const amendPropsWithChildren = DOM => props => {
         inputField: inputField({DOM, props$}, field.id)
       }
     })
-  }), props.fieldGroups)
-  const newProps = { ...props, fieldGroups }
-  return newProps
+  }), page.fieldGroups)
+  const newPage = { ...page, fieldGroups }
+  return newPage
 }
 
-const makeInputFieldAction$ = (actionKey, amendedProps$) => {
-  const getActionFromInputFields$ = actionKey => props => {
+const makeInputFieldAction$ = (actionKey, amendedPage$) => {
+  const getActionFromInputFields$ = actionKey => page => {
     const getInputFieldAction = path(['inputField', actionKey])
     const getActionsFromFields = compose(map(getInputFieldAction), prop('fields'))
     const getActionsFromFieldGroups = compose(flatten, map(getActionsFromFields), prop('fieldGroups'))
-    const actions = getActionsFromFieldGroups(props)
+    const actions = getActionsFromFieldGroups(page)
     const action$ = merge(actions)
     return action$
   }
-  const inputFieldAction$ = flatMapLatest(getActionFromInputFields$(actionKey), amendedProps$)
+  const inputFieldAction$ = flatMapLatest(getActionFromInputFields$(actionKey), amendedPage$)
   return inputFieldAction$
 }
 
 const main = (DOM, props$) => {
   const isFormPage = compose(equals('step'), prop('type'))
   const formPage$ = filter(isFormPage, props$)
-  const amendedProps$ = map(amendPropsWithChildren(DOM), formPage$)
-  const vTree$ = view(amendedProps$)
-  const inputFieldEdit$ = makeInputFieldAction$('edit$', amendedProps$)
+  const amendedPage$ = map(amendPageWithChildren(DOM), formPage$)
+  const vTree$ = view(amendedPage$)
+  const inputFieldEdit$ = makeInputFieldAction$('edit$', amendedPage$)
   return {
     DOM: vTree$,
     inputFieldEdit$: inputFieldEdit$

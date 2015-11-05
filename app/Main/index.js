@@ -23,13 +23,14 @@ const main = sources => {
 
   const proxyState$ = new Rx.ReplaySubject(1)
   const activePage$ = map(getActivePage, proxyState$)
+
   const formPage = FormPage(sources.DOM, activePage$)
   const genericPage = GenericPage(activePage$)
-  const pageVTree$ = merge(formPage.DOM, genericPage.DOM)
   const footer = Footer(proxyState$)
 
   const actions = intent(sources.DOM, formPage)
   const state$ = model(actions, responses, sources.History, sources.LocalStorage).shareReplay(1)
+  const pageVTree$ = merge(formPage.DOM, genericPage.DOM)
   const vTree$ = view(footer.DOM, pageVTree$)
 
   const getPostStateRequestObject = (_, state) => makePostStateRequestObject(state)
