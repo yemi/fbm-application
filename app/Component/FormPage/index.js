@@ -8,7 +8,8 @@ const amendPageWithChildren = DOM => page => {
   const fieldGroups = mapIndexed((fieldGroup, i) => ({
     ...fieldGroup,
     fields: fieldGroup.fields.map((field, y) => {
-      const props$ = rxJust({ ...field, fieldGroupIndex: i, fieldIndex: y })
+      const minRows = prop('min-rows', field)
+      const props$ = rxJust({ ...field, minRows, fieldGroupIndex: i, fieldIndex: y })
       return {
         ...field,
         inputField: inputField({DOM, props$}, field.id)

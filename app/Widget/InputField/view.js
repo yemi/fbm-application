@@ -3,6 +3,7 @@ import {hJSX} from '@cycle/dom'
 import {map} from 'ramda'
 import {rxJust, combineLatest} from '../../helpers'
 import {removeMultipleSpaces} from '../../utils'
+import {SetRowsHook} from '../../hooks'
 
 const renderInputOptionToggle = state =>
   <div className={`inputOptionToggle inputOptionToggle--${state.type}`}>
@@ -45,8 +46,13 @@ const renderInputWithOptions = state =>
     ? renderSelectInput(state)
     : map(renderInputOption(state), state.options)
 
-const renderTextarea = ({type, value, id}) =>
-  <textarea name={id} id={id} value={value || ''} cols="40" rows="1" className="input" />
+const renderTextarea = ({type, value, id, minRows}) =>
+  <textarea name={id}
+            id={id}
+            data-hook={new SetRowsHook(minRows)}
+            value={value || ''}
+            cols="40"
+            className="input" />
 
 const renderGenericInput = ({type, value, id}) =>
   <input type={type} value={value || ''} id={id} className="input" />

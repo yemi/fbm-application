@@ -1,13 +1,11 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
-import {map, path} from 'ramda'
+import {map, prop} from 'ramda'
 import {merge} from '../../helpers'
 import {log} from '../../utils'
 
-const targetValue = path(['target', 'value'])
-
 const intent = (DOM, name = '') => ({
-  editInput$: map(targetValue, merge(
+  editInput$: map(prop('target'), merge(
     DOM.select(`#${name} input, #${name} textarea`).events('input'),
     DOM.select(`#${name} input[type="radio"]`).events('change'),
     DOM.select(`#${name} select`).events('change')
