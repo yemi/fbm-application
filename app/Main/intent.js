@@ -3,8 +3,8 @@ import {path, filter, map, prop} from 'ramda'
 import {merge} from '../helpers'
 import {log} from '../utils'
 
-const intent = (DOM, formPage) => ({
-  inputFieldEdit$: formPage.inputFieldEdit$,
+const intent = (DOM, stepPage) => ({
+  inputFieldEdit$: stepPage.inputFieldEdit$,
 
   url$: map(path(['target', 'pathname']), filter(filterLinks, DOM.select('a').events('click'))),
 

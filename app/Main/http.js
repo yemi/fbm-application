@@ -15,19 +15,34 @@ const requestFilter = method => both(isRequestUrlPath('application'), isRequestM
 
 // Fetch data response (GET)
 
-const getFetchDataResponse$ = compose(map(prop('body')), filter(has('body')), retry(3), mergeAll, filter(requestFilter('GET')))
+const getFetchDataResponse$ = compose(
+  map(prop('body')),
+  filter(has('body')),
+  retry(3),
+  mergeAll,
+  filter(requestFilter('GET'))
+)
 
 
 // Post state response (POST)
 
-const getPostStateResponse$ = compose(map(log), retry(3), mergeAll, filter(requestFilter('POST')))
+const getPostStateResponse$ = compose(
+  map(log),
+  retry(3),
+  mergeAll,
+  filter(requestFilter('POST'))
+)
 
 
 // Http requests
 
 const initialApplicationRequest$ = map(makeRequestObject('GET', null), rxJust(`${API_URL}/application`))
 
-const makeHttpRequest$ = (...otherRequest$) => merge(initialApplicationRequest$, ...otherRequest$)
+const makeHttpRequest$ = (...otherRequest$) =>
+  merge(
+    initialApplicationRequest$,
+    ...otherRequest$
+  )
 
 export default {
   getFetchDataResponse$,

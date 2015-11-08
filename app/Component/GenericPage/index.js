@@ -4,9 +4,7 @@ import {compose, equals, filter, prop} from 'ramda'
 import view from './view'
 
 const main = props$ => {
-  const isGenericPage = compose(equals('generic'), prop('type'))
-  const genericPage$ = filter(isGenericPage, props$)
-  const vTree$ = view(genericPage$)
+  const vTree$ = view(props$)
   return {
     DOM: vTree$
   }

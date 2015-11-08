@@ -1,4 +1,4 @@
-import {pick, replace, curry, map, prop, compose, lensProp, lensIndex} from 'ramda'
+import {equals, filter, pick, replace, curry, map, prop, compose, lensProp, lensIndex} from 'ramda'
 import {API_URL} from './config'
 
 const log = a => {
@@ -67,6 +67,17 @@ const removeMultipleSpaces = replace(/\s\s+/g, ' ')
 
 const replicateStream = (origin$, proxy$) => origin$.subscribe(proxy$.asObserver())
 
+const getActivePage = state => {
+  const activePage = prop(state.activeRoute, state.pages)
+  return activePage
+}
+
+const makePageType$ = (type, state$) => {
+  const activePage$ = map(getActivePage, state$)
+  const pageTypeFilter = compose(equals(type), prop('type'))
+  return filter(pageTypeFilter, activePage$)
+}
+
 export default {
   log,
   log_,
@@ -77,5 +88,7 @@ export default {
   slash,
   lenses,
   removeMultipleSpaces,
-  replicateStream
+  replicateStream,
+  getActivePage,
+  makePageType$
 }

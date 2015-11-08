@@ -4,16 +4,11 @@ import intent from './intent'
 import view from './view'
 import model from './model'
 import {getFetchDataResponse$, getPostStateResponse$, makeHttpRequest$} from './http'
-import {isSuccessfulHttpResponse, makePostStateRequestObject, replicateStream, log} from '../utils'
+import {makePageType$, isSuccessfulHttpResponse, makePostStateRequestObject, replicateStream, log} from '../utils'
 import {withLatestFrom, merge} from '../helpers'
-import FormPage from '../Component/FormPage'
+import StepPage from '../Component/StepPage'
 import GenericPage from '../Component/GenericPage'
 import Footer from '../Component/Footer'
-
-const getActivePage = state => {
-  const activePage = prop(state.activeRoute, state.pages)
-  return activePage
-}
 
 const main = sources => {
   const responses = {
@@ -22,15 +17,16 @@ const main = sources => {
   }
 
   const proxyState$ = new Rx.ReplaySubject(1)
-  const activePage$ = map(getActivePage, proxyState$)
 
-  const formPage = FormPage(sources.DOM, activePage$)
-  const genericPage = GenericPage(activePage$)
+  const stepPage$ = makePageType$('step', proxyState$)
+  const stepPage = StepPage(sources.DOM, stepPage$)
+  const genericPage$ = makePageType$('generic', proxyState$)
+  const genericPage = GenericPage(genericPage$)
   const footer = Footer(proxyState$)
 
-  const actions = intent(sources.DOM, formPage)
+  const actions = intent(sources.DOM, stepPage)
   const state$ = model(actions, responses, sources.History, sources.LocalStorage).shareReplay(1)
-  const pageVTree$ = merge(formPage.DOM, genericPage.DOM)
+  const pageVTree$ = merge(stepPage.DOM, genericPage.DOM)
   const vTree$ = view(footer.DOM, pageVTree$)
 
   const getPostStateRequestObject = (_, state) => makePostStateRequestObject(state)
