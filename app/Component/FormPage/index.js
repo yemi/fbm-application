@@ -1,47 +1,45 @@
 import {Rx} from '@cycle/core'
+import R from 'ramda'
+import H from '../../helpers'
 import view from './view'
-import {filter, prop, flatten, path, compose, equals, map} from 'ramda'
-import {merge, flatMapLatest, mapIndexed, rxJust} from '../../helpers'
-import inputField from '../../Widget/InputField'
+import formField from '../../Widget/FormField'
 
-const amendPageWithChildren = DOM => page => {
-  const fieldGroups = mapIndexed((fieldGroup, i) => ({
+const amendPropsWithChildren = DOM => props => {
+  const fieldGroups = H.mapIndexed((fieldGroup, i) => ({
     ...fieldGroup,
-    fields: fieldGroup.fields.map((field, y) => {
-      const minRows = prop('min-rows', field)
-      const props$ = rxJust({ ...field, minRows, fieldGroupIndex: i, fieldIndex: y })
+    fields: H.mapIndexed((field, y) => {
+      const minRows = R.prop('min-rows', field)
+      const props$ = H.rxJust({ ...field, minRows, fieldGroupIndex: i, fieldIndex: y })
       return {
         ...field,
-        inputField: inputField({DOM, props$}, field.id)
+        formField: formField({DOM, props$}, field.id)
       }
-    })
-  }), page.fieldGroups)
-  const newPage = { ...page, fieldGroups }
-  return newPage
+    }, fieldGroup.fields)
+  }), props.fieldGroups)
+  const newProps = { ...props, fieldGroups }
+  return newProps
 }
 
-const makeInputFieldAction$ = (actionKey, amendedPage$) => {
-  const getActionFromInputFields$ = actionKey => page => {
-    const getInputFieldAction = path(['inputField', actionKey])
-    const getActionsFromFields = compose(map(getInputFieldAction), prop('fields'))
-    const getActionsFromFieldGroups = compose(flatten, map(getActionsFromFields), prop('fieldGroups'))
-    const actions = getActionsFromFieldGroups(page)
-    const action$ = merge(actions)
+const makeFormFieldAction$ = (actionKey, amendedProps$) => {
+  const getActionFromFormFields$ = actionKey => props => {
+    const getFormFieldAction = R.path(['formField', actionKey])
+    const getActionsFromFields = R.compose(R.map(getFormFieldAction), R.prop('fields'))
+    const getActionsFromFieldGroups = R.compose(R.flatten, R.map(getActionsFromFields), R.prop('fieldGroups'))
+    const actions = getActionsFromFieldGroups(props)
+    const action$ = H.merge(actions)
     return action$
   }
-  const inputFieldAction$ = flatMapLatest(getActionFromInputFields$(actionKey), amendedPage$)
-  return inputFieldAction$
+  const formFieldAction$ = H.flatMapLatest(getActionFromFormFields$(actionKey), amendedProps$)
+  return formFieldAction$
 }
 
-const main = (DOM, props$) => {
-  const isFormPage = compose(equals('step'), prop('type'))
-  const formPage$ = filter(isFormPage, props$)
-  const amendedPage$ = map(amendPageWithChildren(DOM), formPage$)
-  const vTree$ = view(amendedPage$)
-  const inputFieldEdit$ = makeInputFieldAction$('edit$', amendedPage$)
+const main = ({DOM, props$}) => {
+  const amendedProps$ = R.map(amendPropsWithChildren(DOM), props$)
+  const vTree$ = view(amendedProps$)
+  const formFieldEdit$ = makeFormFieldAction$('edit$', amendedProps$)
   return {
     DOM: vTree$,
-    inputFieldEdit$: inputFieldEdit$
+    formFieldEdit$: formFieldEdit$
   }
 }
 

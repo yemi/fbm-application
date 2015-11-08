@@ -1,6 +1,5 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
-import {compose, equals, filter, prop} from 'ramda'
 import view from './view'
 
 const main = props$ => {

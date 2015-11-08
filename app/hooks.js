@@ -1,4 +1,4 @@
-import {prop, flip, compose, divide, subtract} from 'ramda'
+import R from 'ramda'
 
 function SetRowsHook (minRows) {
   this.minRows = minRows
@@ -7,11 +7,11 @@ function SetRowsHook (minRows) {
 const calculateTextareaRows = textarea => {
   const lineHeight = 28.5
   const minHeight = 53
-  const getRows = compose(
+  const getRows = R.compose(
     Math.ceil,
-    flip(divide)(lineHeight),
-    flip(subtract)(minHeight),
-    prop('scrollHeight')
+    R.flip(R.divide)(lineHeight),
+    R.flip(R.subtract)(minHeight),
+    R.prop('scrollHeight')
   )
   const rows = getRows(textarea)
   return rows

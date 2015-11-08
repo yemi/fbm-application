@@ -1,17 +1,17 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
-import {not, head, keys, pickBy, isEmpty, identity, max, min, nth, map, compose, both, equals, prop, propEq} from 'ramda'
+import R from 'ramda'
 import {log, slash} from '../../utils'
 
 const getPathToStep = (targetStepIndex, props) => {
   const maxStepIndex = props.totalSteps - 1
   const minStepIndex = 0
   const safeStepIndex = targetStepIndex > props.activeStep
-    ? min(maxStepIndex, targetStepIndex)
-    : max(minStepIndex, targetStepIndex)
-  const isPageStep = propEq('type', 'step')
-  const hasTargetStepIndex = compose(equals(safeStepIndex), prop('index'))
-  const getStepPath = compose(head, keys, pickBy(both(isPageStep, hasTargetStepIndex)))
+    ? R.min(maxStepIndex, targetStepIndex)
+    : R.max(minStepIndex, targetStepIndex)
+  const isPageStep = R.propEq('type', 'step')
+  const hasTargetStepIndex = R.compose(R.equals(safeStepIndex), R.prop('index'))
+  const getStepPath = R.compose(R.head, R.keys, R.pickBy(R.both(isPageStep, hasTargetStepIndex)))
   const stepPath = getStepPath(props.pages)
   return stepPath
 }
@@ -53,7 +53,7 @@ const getNextLinkId = props => {
   return id
 }
 
-const view = map(props => {
+const view = R.map(props => {
   const {prevStepUrl, nextStepUrl} = getPrevAndNextUrls(props)
   const postErrors = true ? null : renderPostErrors(props) // TODO: Do post error check
   const stepIndicator = renderStepIndicator(props)
@@ -69,7 +69,7 @@ const view = map(props => {
         Back
       </a>
       {stepIndicator}
-      <a href={props.canContinue && not(activeStepIsLastStep(props)) ? nextStepUrl : '#'}
+      <a href={props.canContinue && R.not(activeStepIsLastStep(props)) ? nextStepUrl : '#'}
          id={nextLinkId}
          className={nextLinkClasses}>
         Continue

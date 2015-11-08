@@ -1,18 +1,18 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
-import {prop, map, path} from 'ramda'
+import R from 'ramda'
 
 const renderFieldGroup = fieldGroup => {
-  const fields = map(path(['inputField', 'DOM']), fieldGroup.fields)
+  const fields = R.map(R.path(['formField', 'DOM']), fieldGroup.fields)
   return (
-    <div class="inputFieldGroup">
+    <div class="formFieldGroup">
       {fields}
     </div>
   )
 }
 
-const view = map(page => {
-  const fieldGroups = map(renderFieldGroup, page.fieldGroups)
+const view = R.map(page => {
+  const fieldGroups = R.map(renderFieldGroup, page.fieldGroups)
   return (
     <div>
       <h2 className="mega textCenter tr1">{page.title}</h2>

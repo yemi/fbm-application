@@ -1,4 +1,4 @@
-import {equals, filter, pick, replace, curry, map, prop, compose, lensProp, lensIndex} from 'ramda'
+import R from 'ramda'
 import {API_URL} from './config'
 
 const log = a => {
@@ -6,12 +6,12 @@ const log = a => {
   return a
 }
 
-const log_ = curry((desc, a) => {
+const log_ = R.curry((desc, a) => {
   console.log(desc, a);
   return a
 })
 
-const makeRequestObject = curry((method, query, url) => ({
+const makeRequestObject = R.curry((method, query, url) => ({
   url: url,
   method: method,
   query: query || {},
@@ -22,7 +22,7 @@ const makeRequestObject = curry((method, query, url) => ({
 }))
 
 const makePostStateRequestObject = state => {
-  const postState = map(pick(['fieldGroups']), state.pages)
+  const postState = R.map(R.pick(['fieldGroups']), state.pages)
   const url = `${API_URL}/application`
   const method = 'POST'
   const requestObject = makeRequestObject(method, postState, url)
@@ -36,8 +36,8 @@ const slash = path => `/${path}`
 const mergeStateWithSourceData = (state, sourceData) => {
   const newState = {
     ...state,
-    pages: prop('pages', sourceData),
-    totalSteps: prop('total-steps', sourceData) || prop('totalSteps', sourceData),
+    pages: R.prop('pages', sourceData),
+    totalSteps: R.prop('total-steps', sourceData) || R.prop('totalSteps', sourceData),
     loading: false,
     canContinue: sourceData.canContinue || false
   }
@@ -45,17 +45,17 @@ const mergeStateWithSourceData = (state, sourceData) => {
 }
 
 const makeFieldGroupsLens = route =>
-  compose(
-    lensProp('pages'),
-    lensProp(route),
-    lensProp('fieldGroups')
+  R.compose(
+    R.lensProp('pages'),
+    R.lensProp(route),
+    R.lensProp('fieldGroups')
   )
 
 const makeFieldsLens = (route, fieldGroupIndex) =>
-  compose(
+  R.compose(
     makeFieldGroupsLens(route),
-    lensIndex(fieldGroupIndex),
-    lensProp('fields')
+    R.lensIndex(fieldGroupIndex),
+    R.lensProp('fields')
   )
 
 const lenses = {
@@ -63,19 +63,19 @@ const lenses = {
   fields: (route, fieldGroupIndex) => makeFieldsLens(route, fieldGroupIndex)
 }
 
-const removeMultipleSpaces = replace(/\s\s+/g, ' ')
+const removeMultipleSpaces = R.replace(/\s\s+/g, ' ')
 
 const replicateStream = (origin$, proxy$) => origin$.subscribe(proxy$.asObserver())
 
 const getActivePage = state => {
-  const activePage = prop(state.activeRoute, state.pages)
+  const activePage = R.prop(state.activeRoute, state.pages)
   return activePage
 }
 
 const makePageType$ = (type, state$) => {
-  const activePage$ = map(getActivePage, state$)
-  const pageTypeFilter = compose(equals(type), prop('type'))
-  return filter(pageTypeFilter, activePage$)
+  const activePage$ = R.map(getActivePage, state$)
+  const pageTypeFilter = R.compose(R.equals(type), R.prop('type'))
+  return R.filter(pageTypeFilter, activePage$)
 }
 
 export default {

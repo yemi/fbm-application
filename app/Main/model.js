@@ -1,4 +1,4 @@
-import {replace, assoc, dissoc, not, isEmpty, has, filter, view, set, pick, adjust, none, and, map, compose, prop, propEq} from 'ramda'
+import R from 'ramda'
 import {run, Rx} from '@cycle/core'
 import {slash, log, log_, lenses, mergeStateWithSourceData} from '../utils'
 import {DEFAULT_ROUTE} from '../config'
@@ -14,52 +14,49 @@ const defaultState = {
   fieldsErrors: {}
 }
 
-
-
-const makeUpdate$ = (actions, responses, History, localStorageSource$) => {
-
+const makeUpdate$ = ({ actions, httpGetResponse$, httpPostResponse$, History, LocalStorage }) => {
   const updateField = ({value, fieldIndex, fieldGroupIndex, errorMessage}) => state => {
     const fieldsLens = lenses.fields(state.activeRoute, fieldGroupIndex)
-    const fields = view(fieldsLens, state)
+    const fields = R.view(fieldsLens, state)
     const updateField = field => ({ ...field, value, errorMessage })
-    const updatedFields = adjust(updateField, fieldIndex, fields)
-    const newState = set(fieldsLens, updatedFields, state)
+    const updatedFields = R.adjust(updateField, fieldIndex, fields)
+    const newState = R.set(fieldsLens, updatedFields, state)
     return newState
   }
 
   const handleFieldErrors = ({errorMessage, id}) => state => {
-    const fieldsErrors = errorMessage ? assoc(id, errorMessage, state.fieldErrors) : dissoc(id, state.fieldErrors)
-    const newState = { ...state, canContinue: isEmpty(fieldsErrors) }
+    const fieldsErrors = errorMessage ? R.assoc(id, errorMessage, state.fieldErrors) : R.dissoc(id, state.fieldErrors)
+    const newState = { ...state, canContinue: R.isEmpty(fieldsErrors) }
     return newState
   }
 
-  const updateFieldAndHandleFieldErrors$ = map(inputField =>
-    compose(handleFieldErrors(inputField), updateField(inputField))
-  , actions.inputFieldEdit$)
+  const updateFieldAndHandleFieldErrors$ = R.map(formField =>
+    R.compose(handleFieldErrors(formField), updateField(formField))
+  , actions.formFieldEdit$)
 
-  const nonEmptyLocalStorage$ = filter(has('pages'), localStorageSource$)
-  const sourceData$ = head(merge(responses.fetchDataResponse$, nonEmptyLocalStorage$))
+  const nonEmptyLocalStorage$ = R.filter(R.has('pages'), LocalStorage)
+  const sourceData$ = head(merge(httpGetResponse$, nonEmptyLocalStorage$))
 
-  const setInitState$ = map(sourceData => state => {
+  const setInitState$ = R.map(sourceData => state => {
     const newState = mergeStateWithSourceData(state, sourceData)
     return newState
   }, sourceData$)
 
-  const handleRoute$ = map(location => state => {
-    const route = replace('/', '', location.pathname)
+  const handleRoute$ = R.map(location => state => {
+    const route = R.replace('/', '', location.pathname)
     const activeRoute = route || 'company-basics'
-    const activePage = prop(activeRoute, state.pages)
+    const activePage = R.prop(activeRoute, state.pages)
     const activeStep = activePage.type === 'step' ? activePage.index : state.activeStep
     const newState = { ...state, activeStep, activeRoute }
     return newState
   }, History)
 
-  const onSubmit$ = map(() => state => {
+  const onSubmit$ = R.map(() => state => {
     const newState = { ...state, loading: true, postErrors: [] }
     return state.canContinue ? newState : state
   }, actions.submit$)
 
-  const ongetPostStateResponse$ = map(res => state => {
+  const ongetHttpPostResponse$ = R.map(res => state => {
     // const errs = [{ id: 'company-name', errMsg: 'Your company type should be aBBa' }]
     // if (err) {
     //   return { ...state, postErrors: errs, loading: false }
@@ -67,11 +64,11 @@ const makeUpdate$ = (actions, responses, History, localStorageSource$) => {
     const pages = merge(state.pages, res.body)
     const newState = { ...state, pages, loading: false }
     return newState
-  }, responses.postStateResponse$)
+  }, httpPostResponse$)
 
   // Combiners
 
-  const setInitStateAndStep = (setInitState, handleRoute) => compose(handleRoute, setInitState)
+  const setInitStateAndStep = (setInitState, handleRoute) => R.compose(handleRoute, setInitState)
   const initApp$ = head(withLatestFrom(setInitStateAndStep, setInitState$, handleRoute$))
 
   // Merge all update functions
@@ -80,16 +77,16 @@ const makeUpdate$ = (actions, responses, History, localStorageSource$) => {
     concat(initApp$, handleRoute$),
     updateFieldAndHandleFieldErrors$,
     onSubmit$,
-    ongetPostStateResponse$
+    ongetHttpPostResponse$
   )
 }
 
-const model = (actions, responses, History, localStorageSource$) => {
-  const update$ = makeUpdate$(actions, responses, History, localStorageSource$)
+const model = sources => {
+  const update$ = makeUpdate$(sources)
   const stateFold = (state, update) => update(state)
   const state$ = scan(stateFold, defaultState, update$)
-  const stateHasPages = compose(not, isEmpty, prop('pages'))
-  return filter(stateHasPages, state$)
+  const stateHasPages = R.compose(R.not, R.isEmpty, R.prop('pages'))
+  return R.filter(stateHasPages, state$)
 }
 
 export default model

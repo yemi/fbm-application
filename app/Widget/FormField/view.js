@@ -1,8 +1,8 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
-import {map} from 'ramda'
-import {rxJust, combineLatest} from '../../helpers'
-import {removeMultipleSpaces} from '../../utils'
+import R from 'ramda'
+import H from '../../helpers'
+import U from '../../utils'
 import {SetRowsHook} from '../../hooks'
 
 const renderInputOptionToggle = state =>
@@ -31,7 +31,7 @@ const renderSelectInputOption = state => option =>
   <option value={option.value} selected={state.value === option.value}>{option.label}</option>
 
 const renderSelectInput = state => {
-  const selectOptions = map(renderSelectInputOption(state), state.options)
+  const selectOptions = R.map(renderSelectInputOption(state), state.options)
   return (
     <div>
       <select name={state.id} id={state.id} >
@@ -44,7 +44,7 @@ const renderSelectInput = state => {
 const renderInputWithOptions = state =>
   state.type === 'select'
     ? renderSelectInput(state)
-    : map(renderInputOption(state), state.options)
+    : R.map(renderInputOption(state), state.options)
 
 const renderTextarea = ({type, value, id, minRows}) =>
   <textarea name={id}
@@ -70,11 +70,11 @@ const getFormFieldClasses = ({type, value, errorMessage}, focus) => {
   const focusState = focus ? 'is-focused' : ''
   const errorContext = errorMessage ? 'has-error' : ''
   const formFieldClasses = `formField formField--${formFieldType} ${floatLabelContext} ${floatLabelState} ${focusState} ${errorContext} mb30`
-  return removeMultipleSpaces(formFieldClasses)
+  return U.removeMultipleSpaces(formFieldClasses)
 }
 
 const view = (state$, focus$, name = '') =>
-  combineLatest(state$, focus$, (state, focus) => {
+  H.combineLatest(state$, focus$, (state, focus) => {
     const formFieldClasses = getFormFieldClasses(state, focus)
     const input = state.options ? renderInputWithOptions(state) : renderInput(state)
     const helpTextToggle = state.helpText ? renderHelpTextToggle(state) : null

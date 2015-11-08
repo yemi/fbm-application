@@ -5,7 +5,7 @@ import model from './model'
 import intent from './intent'
 import {log} from '../../utils'
 
-const inputField = ({DOM, props$}, name = '') => {
+const formField = ({DOM, props$}, name = '') => {
   const actions = intent(DOM, name)
   const state$ = model(props$, actions).shareReplay(1)
   const vtree$ = view(state$, actions.focus$, name)
@@ -16,4 +16,4 @@ const inputField = ({DOM, props$}, name = '') => {
   }
 }
 
-export default inputField
+export default formField
