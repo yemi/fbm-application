@@ -14,10 +14,11 @@
   "devDependencies": {
     "babel": "5.6.x",
     "babel-loader": "^6.0.1",
+    "tape": "^4.2.2",
     "webpack": "^1.12.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "tape",
     "build": "webpack --progress --colors",
     "watch": "webpack --progress --colors --watch"
   }

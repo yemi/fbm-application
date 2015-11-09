@@ -1,4 +1,5 @@
 import R from 'ramda'
+import H from './helpers'
 import {API_URL} from './config'
 
 const log = a => {
@@ -78,6 +79,12 @@ const makePageType$ = (type, state$) => {
   return R.filter(pageTypeFilter, activePage$)
 }
 
+const events = (selector, events) => {
+  return H.merge(
+    R.map(event => selector.events(event), events)
+  )
+}
+
 export default {
   log,
   log_,
@@ -90,5 +97,6 @@ export default {
   removeMultipleSpaces,
   replicateStream,
   getActivePage,
-  makePageType$
+  makePageType$,
+  events
 }
