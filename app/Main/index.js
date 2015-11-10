@@ -24,7 +24,7 @@ const main = ({DOM, HTTP, LocalStorage, History}) => {
   const actions = intent(DOM, formPage)
   const state$ = model({actions, httpGetResponse$, httpPostResponse$, History, LocalStorage}).shareReplay(1)
   const pageVTree$ = merge(formPage.DOM, genericPage.DOM)
-  const vTree$ = view(footer.DOM, pageVTree$)
+  const vTree$ = view(History, footer.DOM, pageVTree$)
 
   const getPostStateRequestObject = (_, state) => makePostStateRequestObject(state)
   const postStateRequest$ = withLatestFrom(getPostStateRequestObject, actions.submit$, state$)

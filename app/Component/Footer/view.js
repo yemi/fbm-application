@@ -1,7 +1,7 @@
 /** @jsx hJSX */
 import {hJSX} from '@cycle/dom'
 import R from 'ramda'
-import {log, slash} from '../../utils'
+import U from '../../utils'
 
 const getUrlToStep = (targetStepIndex, props) => {
   const maxStepIndex = props.totalSteps - 1
@@ -13,7 +13,7 @@ const getUrlToStep = (targetStepIndex, props) => {
   const hasTargetStepIndex = R.compose(R.equals(safeStepIndex), R.prop('index'))
   const getStepPath = R.compose(R.head, R.keys, R.pickBy(R.both(isPageStep, hasTargetStepIndex)))
   const stepPath = getStepPath(props.pages)
-  return slash(stepPath)
+  return U.slash(stepPath)
 }
 
 const renderPostErrors = ({postErrors}) =>
@@ -30,56 +30,43 @@ const renderStepIndicator = props => {
   )
 }
 
-const getPrevButtonClasses = props => {
-  const hidden = props.activeStep === 0 ? 'hidden' : ''
-  return `button button--secondary mh05 ${hidden}`
-}
+const renderDisabledButton = text => <span className="button button--disabled">{text}</span>
 
-const getNextButtonClasses = props => {
-  const disabled = props.canContinue ? '' : 'button--disabled'
-  return `button ${disabled} mh05`
+const renderLinkButton = (text, url, extraClasses) => <a href={url} className={`button ${extraClasses}`}>{text}</a>
+
+const renderPrevButton = props => {
+  const prevStepUrl = getUrlToStep(props.activeStep - 1, props)
+  return props.activeStep === 0 ? null : renderLinkButton('Back', prevStepUrl, 'button--secondary')
 }
 
 const renderNextStepButton = props => {
   const nextStepUrl = getUrlToStep(props.activeStep + 1, props)
-  const nextButtonClasses = getNextButtonClasses(props)
-  return (
-    <a href={nextStepUrl}
-       id="stepNext"
-       className={nextButtonClasses}>
-      Continue
-    </a>
-  )
+  return props.canContinue 
+    ? renderLinkButton('Continue', nextStepUrl) 
+    : renderDisabledButton('Continue')
 }
 
-const renderSubmitButton = props => {
-  const nextButtonClasses = getNextButtonClasses(props)
-  return (
-    <button id="submit" className={nextButtonClasses}>
-       Submit application
-    </button>
-  )
-}
+const renderSubmitButton = props => 
+  props.canContinue
+    ? <button id="submit" className="button">Submit application</button>
+    : renderDisabledButton('Submit application')
 
 const activeStepIsLastStep = props => props.activeStep === props.totalSteps - 1
 
 const renderNextButton = props =>
-  activeStepIsLastStep(props) ? renderSubmitButton(props) : renderNextStepButton(props)
+  activeStepIsLastStep(props) 
+    ? renderSubmitButton(props) 
+    : renderNextStepButton(props)
 
 const view = R.map(props => {
-  const prevStepUrl = getUrlToStep(props.activeStep - 1, props)
   const postErrors = true ? null : renderPostErrors(props) // TODO: Do post error check
   const stepIndicator = renderStepIndicator(props)
-  const prevButtonClasses = getPrevButtonClasses(props)
+  const prevButton = renderPrevButton(props)
   const nextButton = renderNextButton(props)
   return (
     <footer className="textCenter bgWhite pv20">
       {postErrors}
-      <a href={prevStepUrl}
-         id="stepBack"
-         className={prevButtonClasses}>
-        Back
-      </a>
+      {prevButton}
       {stepIndicator}
       {nextButton}
     </footer>

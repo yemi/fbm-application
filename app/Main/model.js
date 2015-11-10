@@ -11,7 +11,8 @@ const defaultState = {
   canContinue: false,
   pages: {},
   totalSteps: null,
-  fieldsErrors: {}
+  fieldsErrors: {},
+  isSubmitted: false
 }
 
 const makeUpdate$ = ({ actions, httpGetResponse$, httpPostResponse$, History, LocalStorage }) => {
@@ -24,14 +25,19 @@ const makeUpdate$ = ({ actions, httpGetResponse$, httpPostResponse$, History, Lo
     return newState
   }
 
-  const handleFieldErrors = ({errorMessage, id}) => state => {
+  const updateFieldsErrors = ({errorMessage, id}) => state => {
     const fieldsErrors = errorMessage ? R.assoc(id, errorMessage, state.fieldErrors) : R.dissoc(id, state.fieldErrors)
-    const newState = { ...state, canContinue: R.isEmpty(fieldsErrors) }
+    const newState = { ...state, fieldsErrors }
+    return newState
+  }
+
+  const handleFieldsErrors = state => {
+    const newState = { ...state, canContinue: R.isEmpty(state.fieldsErrors) }
     return newState
   }
 
   const updateFieldAndHandleFieldErrors$ = R.map(formField =>
-    R.compose(handleFieldErrors(formField), updateField(formField))
+    R.compose(handleFieldsErrors, updateFieldsErrors(formField), updateField(formField))
   , actions.formFieldEdit$)
 
   const nonEmptyLocalStorage$ = R.filter(R.has('pages'), LocalStorage)
@@ -43,8 +49,8 @@ const makeUpdate$ = ({ actions, httpGetResponse$, httpPostResponse$, History, Lo
   }, sourceData$)
 
   const handleRoute$ = R.map(location => state => {
-    const route = R.replace('/', '', location.pathname)
-    const activeRoute = route || 'company-basics'
+    const route = location.pathname === '/' ? DEFAULT_ROUTE : location.pathname
+    const activeRoute = R.replace('/', '', route)
     const activePage = R.prop(activeRoute, state.pages)
     const activeStep = activePage.type === 'step' ? activePage.index : state.activeStep
     const newState = { ...state, activeStep, activeRoute }
@@ -62,7 +68,7 @@ const makeUpdate$ = ({ actions, httpGetResponse$, httpPostResponse$, History, Lo
     //   return { ...state, postErrors: errs, loading: false }
     // }
     const pages = merge(state.pages, res.body)
-    const newState = { ...state, pages, loading: false }
+    const newState = { ...state, pages, isSubmitted: true, loading: false }
     return newState
   }, httpPostResponse$)
 
