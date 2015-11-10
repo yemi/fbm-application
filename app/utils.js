@@ -40,7 +40,8 @@ const mergeStateWithSourceData = (state, sourceData) => {
     pages: R.prop('pages', sourceData),
     totalSteps: R.prop('total-steps', sourceData) || R.prop('totalSteps', sourceData),
     loading: false,
-    canContinue: sourceData.canContinue || false
+    canContinue: sourceData.canContinue || false,
+    fieldsErrors: sourceData.fieldsErrors
   }
   return newState
 }
