@@ -93,16 +93,13 @@ const makeUpdate$ = sources => {
   // -- onSubmit$ :: Observable (State -> State)
   const onSubmit$ = R.map(() => state => {
     const newState = { ...state, loading: true, postErrors: [] }
-    return state.canContinue ? newState : state
+    return newState 
   }, sources.actions.submit$)
 
   // -- onGetHttpPostResponse$ :: Observable (State -> State)
   const onGetHttpPostResponse$ = R.map(res => state => {
-    // const errs = [{ id: 'company-name', errMsg: 'Your company type should be aBBa' }]
-    // if (err) {
-    //   return { ...state, postErrors: errs, loading: false }
-    // }
-    const pages = H.merge(state.pages, res.body)
+    //TODO: Handle error responses from server
+    const pages = R.merge(state.pages, res.body)
     const newState = { ...state, pages, isSubmitted: true, loading: false }
     return newState
   }, sources.httpPostResponse$)

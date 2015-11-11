@@ -49,7 +49,6 @@ const renderInputWithOptions = state =>
 const renderTextarea = ({type, value, id, minRows}) =>
   <textarea name={id}
             id={id}
-            data-hook={new SetRowsHook(minRows)}
             value={value || ''}
             cols="40"
             className="input" />

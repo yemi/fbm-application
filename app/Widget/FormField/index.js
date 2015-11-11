@@ -7,10 +7,11 @@ import H from '../../helpers'
 import {log} from '../../utils'
 
 const formField = ({DOM, props$}, name = '') => {
+  console.log('initialised', name)
   const actions = intent(DOM, name)
-  const state$ = model(props$, actions).shareReplay(2)
+  const state$ = model(props$, actions).shareReplay(1)
   const vtree$ = view(state$, actions.focus$, name)
-  const stopEdit$ = H.merge(actions.editOptionInput$, actions.stopTextInputEdit$)
+  const stopEdit$ = H.merge(actions.editOptionInput$, actions.stopEditTextInput$)
   const edit$ = H.sample(state$, stopEdit$).map(log)
   return {
     DOM: vtree$,

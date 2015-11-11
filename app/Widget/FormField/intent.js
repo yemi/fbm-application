@@ -7,7 +7,9 @@ import U from '../../utils'
 const intent = (DOM, name = '') => ({
   editTextInput$: R.map(R.prop('target'), H.merge(
     DOM.select(`#${name} textarea`).events('input'),
-    DOM.select(`#${name} input[type="text"]`).events('input')
+    DOM.select(`#${name} input[type="text"]`).events('input'),
+    DOM.select(`#${name} input[type="number"]`).events('input'),
+    DOM.select(`#${name} input[type="email"]`).events('input')
   )),
 
   editOptionInput$: R.map(R.prop('target'), H.merge(
@@ -16,7 +18,7 @@ const intent = (DOM, name = '') => ({
     DOM.select(`#${name} input[type="checkbox"]`).events('change')
   )),
 
-  stopTextInputEdit$: H.merge(
+  stopEditTextInput$: H.merge(
     DOM.select(`#${name} textarea`).events('change'),
     DOM.select(`#${name} input[type="text"]`).events('change'),
   ),
