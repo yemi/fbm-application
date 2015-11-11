@@ -1,6 +1,7 @@
 import {Rx} from '@cycle/core'
 import R from 'ramda'
 import H from '../../helpers'
+import U from '../../utils'
 import view from './view'
 import formField from '../../Widget/FormField'
 
@@ -34,7 +35,7 @@ const makeFormFieldAction$ = (actionKey, amendedProps$) => {
 }
 
 const main = ({DOM, props$}) => {
-  const amendedProps$ = R.map(amendPropsWithChildren(DOM), props$)
+  const amendedProps$ = R.map(amendPropsWithChildren(DOM), props$).shareReplay(1)
   const vTree$ = view(amendedProps$)
   const formFieldEdit$ = makeFormFieldAction$('edit$', amendedProps$)
   return {

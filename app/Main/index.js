@@ -16,7 +16,6 @@ const main = ({DOM, HTTP, LocalStorage, History}) => {
   const formPage = FormPage({DOM, props$: formPage$})
   const genericPage$ = makePageType$('generic', proxyState$)
   const genericPage = GenericPage(genericPage$)
-  const footer = Footer(proxyState$)
 
   const httpGetResponse$ = getHttpGetResponse$(HTTP)
   const httpPostResponse$ = getHttpPostResponse$(HTTP)
@@ -24,6 +23,7 @@ const main = ({DOM, HTTP, LocalStorage, History}) => {
   const actions = intent(DOM, formPage)
   const state$ = model({actions, httpGetResponse$, httpPostResponse$, History, LocalStorage}).shareReplay(1)
   const pageVTree$ = merge(formPage.DOM, genericPage.DOM)
+  const footer = Footer(state$)
   const vTree$ = view(History, footer.DOM, pageVTree$)
 
   const getPostStateRequestObject = (_, state) => makePostStateRequestObject(state)

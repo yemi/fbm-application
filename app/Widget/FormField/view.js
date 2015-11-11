@@ -17,11 +17,11 @@ const renderInputOption = state => option =>
     <input type={state.type}
            value={option.value}
            id={option.value}
-           className={`input--${state.type} fakeHide`}
+           className={`input--${state.type} hide`}
            name={state.id}
            checked={state.value === option.value} />
 
-       <label htmlFor={option.value}>
+      <label htmlFor={option.value}>
       {renderInputOptionToggle(state)}
       {option.label}
     </label>
