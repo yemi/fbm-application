@@ -1,7 +1,7 @@
 import {run, Rx} from '@cycle/core'
 import R from 'ramda'
 import H from '../helpers'
-import {slash, log, log_, lenses, mergeStateWithSourceData} from '../utils'
+import U from '../utils'
 import {DEFAULT_ROUTE} from '../config'
 
 const defaultState = {
@@ -16,8 +16,10 @@ const defaultState = {
 }
 
 const makeUpdate$ = sources => {
+
+  // -- updateField :: FormField -> State -> State
   const updateField = ({value, fieldIndex, fieldGroupIndex, errorMessage}) => state => {
-    const fieldsLens = lenses.fields(state.activeRoute, fieldGroupIndex)
+    const fieldsLens = U.lenses.fields(state.activeRoute, fieldGroupIndex)
     const fields = R.view(fieldsLens, state)
     const updateField = field => ({ ...field, value, errorMessage })
     const updatedFields = R.adjust(updateField, fieldIndex, fields)
@@ -25,32 +27,16 @@ const makeUpdate$ = sources => {
     return newState
   }
 
+  // -- updateFieldsErrors :: FormField -> State -> State
   const updateFieldsErrors = ({errorMessage, id}) => state => {
     const fieldsErrors = errorMessage 
-      ? R.assoc(id, errorMessage, state.fieldsErrors) 
+      ? R.assoc(id, errorMessage, state.fieldsErrors)
       : R.dissoc(id, state.fieldsErrors)
     const newState = { ...state, fieldsErrors }
     return newState
   }
 
-  const handleFieldsErrors = state => {
-    const canContinue = R.isEmpty(state.fieldsErrors)
-    const newState = { ...state, canContinue }
-    return newState
-  }
-
-  const updateFieldAndHandleFieldErrors$ = R.map(formField =>
-    R.compose(handleFieldsErrors, updateFieldsErrors(formField), updateField(formField))
-  , sources.actions.formFieldEdit$)
-
-  const nonEmptyLocalStorage$ = R.filter(R.has('pages'), sources.LocalStorage)
-  const sourceData$ = H.head(H.merge(sources.httpGetResponse$, nonEmptyLocalStorage$))
-
-  const setInitState$ = R.map(sourceData => state => {
-    const newState = mergeStateWithSourceData(state, sourceData)
-    return newState
-  }, sourceData$)
-
+  // -- allRequiredFieldsHaveValue :: Page -> Bool
   const allRequiredFieldsHaveValue = page => {
     const isFieldValid = field => (field.required && field.value) || R.not(field.required)
     const isFieldGroupValid = R.compose(R.all(isFieldValid), R.prop('fields'))
@@ -58,21 +44,59 @@ const makeUpdate$ = sources => {
     return areFieldGroupsValid(page.fieldGroups)
   }
 
-  const handleRoute$ = R.map(location => state => {
+  // -- updateCanContinue :: State -> State
+  const updateCanContinue = state => {
+    const activePage = R.prop(state.activeRoute, state.pages)
+    const canContinue = R.isEmpty(state.fieldsErrors) && allRequiredFieldsHaveValue(activePage)
+    const newState = { ...state, canContinue }
+    return newState
+  }
+
+  // -- onFormFieldEdit$ :: Observable (State -> State)
+  const onFormFieldEdit$ = R.map(formField =>
+    R.compose(updateCanContinue, updateFieldsErrors(formField), updateField(formField))
+  , sources.actions.formFieldEdit$)
+
+  // -- nonEmptyLocalStorage$ :: Observable SourceData
+  const nonEmptyLocalStorage$ = R.filter(R.has('pages'), sources.LocalStorage)
+
+  // -- SourceData$ :: Observable SourceData
+  const sourceData$ = H.head(H.merge(sources.httpGetResponse$, nonEmptyLocalStorage$))
+
+  // -- setInitState$ :: Observable (State -> State)
+  const setInitState$ = R.map(sourceData => state => {
+    const newState = U.mergeStateWithSourceData(state, sourceData)
+    return newState
+  }, sourceData$)
+
+  // -- handleRoute :: Location -> State -> State
+  const handleRoute = location => state => {
     const route = location.pathname === '/' ? DEFAULT_ROUTE : location.pathname
     const activeRoute = R.replace('/', '', route)
     const activePage = R.prop(activeRoute, state.pages)
     const activeStep = activePage.type === 'step' ? activePage.index : state.activeStep
-    const canContinue = R.isEmpty(state.fieldsErrors) && allRequiredFieldsHaveValue(activePage)
-    const newState = { ...state, activeStep, activeRoute, canContinue }
+    const newState = { ...state, activeStep, activeRoute, fieldsErrors: {} }
     return newState
-  }, sources.History)
+  }
 
+  // -- activePageIsStep :: State -> Bool
+  const activePageIsStep = state => {
+    const activePage = R.prop(state.activeRoute, state.pages)
+    return activePage.type === 'step'
+  }
+
+  // -- onRouteChange$ :: Observable (State -> State)
+  const onRouteChange$ = R.map(location => 
+    R.compose(R.ifElse(activePageIsStep, updateCanContinue, R.identity), handleRoute(location))
+  , sources.History)
+
+  // -- onSubmit$ :: Observable (State -> State)
   const onSubmit$ = R.map(() => state => {
     const newState = { ...state, loading: true, postErrors: [] }
     return state.canContinue ? newState : state
   }, sources.actions.submit$)
 
+  // -- onGetHttpPostResponse$ :: Observable (State -> State)
   const onGetHttpPostResponse$ = R.map(res => state => {
     // const errs = [{ id: 'company-name', errMsg: 'Your company type should be aBBa' }]
     // if (err) {
@@ -83,16 +107,15 @@ const makeUpdate$ = sources => {
     return newState
   }, sources.httpPostResponse$)
 
-  // Combiners
-
-  const setInitStateAndStep = (setInitState, handleRoute) => R.compose(handleRoute, setInitState)
-  const initApp$ = H.head(H.withLatestFrom(setInitStateAndStep, setInitState$, handleRoute$))
-
-  // Merge all update functions
+  // -- setInitStateAndStep :: (State -> State) -> (State -> State) -> State -> State
+  const setInitStateAndStep = (setInitState, onRouteChange) => R.compose(onRouteChange, setInitState)
+  
+  // -- initApp$ :: Observable (State -> State)
+  const initApp$ = H.head(H.withLatestFrom(setInitStateAndStep, setInitState$, onRouteChange$))
 
   return H.merge(
-    H.concat(initApp$, handleRoute$),
-    updateFieldAndHandleFieldErrors$,
+    H.concat(initApp$, onRouteChange$),
+    onFormFieldEdit$,
     onSubmit$,
     onGetHttpPostResponse$
   )

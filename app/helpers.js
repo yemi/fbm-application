@@ -21,6 +21,8 @@ export default {
   retry: num => observable => observable.retry(num),
 
   rxJust: a => Rx.Observable.just(a),
+  
+  sample: R.curry((a, b) => a.sample(b)),
 
   scan: R.curry((f, a, m) => m instanceof Rx.Observable ? m.scan(f, a) : R.scan(f, a, m)),
 

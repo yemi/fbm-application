@@ -19,7 +19,8 @@ const calculateTextareaRows = textarea => {
 }
 
 const model = (props$, actions) => {
-  const amendedProps$ = H.combineLatest(props$, actions.editInput$, (props, target) => {
+  const editInput$ = H.merge(actions.editTextInput$, actions.editOptionInput$)
+  const amendedProps$ = H.combineLatest(props$, editInput$, (props, target) => {
     const newValue = target.value
     const rows = target.localName === 'textarea' ? props.minRows + calculateTextareaRows(target) : null
     const errorMessage = props.required && !newValue ? `${props.label} is required` : ''

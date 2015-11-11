@@ -5,20 +5,20 @@ import H from '../../helpers'
 import U from '../../utils'
 
 const intent = (DOM, name = '') => ({
-  editInput$: R.map(R.prop('target'), H.merge(
-    DOM.select(`#${name} input`).events('input'),
+  editTextInput$: R.map(R.prop('target'), H.merge(
     DOM.select(`#${name} textarea`).events('input'),
-    DOM.select(`#${name} input[type="radio"]`).events('change'),
-    DOM.select(`#${name} input[type="checkbox"]`).events('change'),
-    DOM.select(`#${name} select`).events('change')
+    DOM.select(`#${name} input[type="text"]`).events('input')
   )),
 
-  stopEdit$: H.merge(
-    DOM.select(`#${name} select`).events('blur'),
-    DOM.select(`#${name} input`).events('change'),
-    DOM.select(`#${name} textarea`).events('change'),
+  editOptionInput$: R.map(R.prop('target'), H.merge(
+    DOM.select(`#${name} select`).events('change'),
     DOM.select(`#${name} input[type="radio"]`).events('change'),
     DOM.select(`#${name} input[type="checkbox"]`).events('change')
+  )),
+
+  stopTextInputEdit$: H.merge(
+    DOM.select(`#${name} textarea`).events('change'),
+    DOM.select(`#${name} input[type="text"]`).events('change'),
   ),
 
   focus$: H.merge(

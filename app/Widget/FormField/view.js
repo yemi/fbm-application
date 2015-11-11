@@ -17,7 +17,7 @@ const renderInputOption = state => option =>
     <input type={state.type}
            value={option.value}
            id={option.value}
-           className={`input--${state.type} hide`}
+           className={`input--${state.type} fakeHide`}
            name={state.id}
            checked={state.value === option.value} />
 

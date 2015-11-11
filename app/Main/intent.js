@@ -1,7 +1,5 @@
 import {filterLinks} from '@cycle/history'
 import R from 'ramda'
-import {merge} from '../helpers'
-import {log} from '../utils'
 
 const intent = (DOM, formPage) => ({
   formFieldEdit$: formPage.formFieldEdit$,

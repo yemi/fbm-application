@@ -69,10 +69,7 @@ const removeMultipleSpaces = R.replace(/\s\s+/g, ' ')
 
 const replicateStream = (origin$, proxy$) => origin$.subscribe(proxy$.asObserver())
 
-const getActivePage = state => {
-  const activePage = R.prop(state.activeRoute, state.pages)
-  return activePage
-}
+const getActivePage = state => R.prop(state.activeRoute, state.pages)
 
 const makePageType$ = (type, state$) => {
   const activePage$ = R.map(getActivePage, state$)
@@ -80,11 +77,10 @@ const makePageType$ = (type, state$) => {
   return R.filter(pageTypeFilter, activePage$)
 }
 
-const events = (selector, events) => {
-  return H.merge(
-    R.map(event => selector.events(event), events)
-  )
-}
+const events = (selector, events) => H.merge(
+  R.map(event => selector.events(event), events)
+)
+
 
 export default {
   log,
