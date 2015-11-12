@@ -39,7 +39,7 @@ const mergeStateWithSourceData = (state, sourceData) => {
     ...state,
     pages: R.prop('pages', sourceData),
     totalSteps: R.prop('total-steps', sourceData) || R.prop('totalSteps', sourceData),
-    loading: false,
+    isLoading: false,
     canContinue: sourceData.canContinue || false,
     fieldsErrors: sourceData.fieldsErrors
   }
@@ -65,8 +65,6 @@ const lenses = {
   fields: (route, fieldGroupIndex) => makeFieldsLens(route, fieldGroupIndex)
 }
 
-const removeMultipleSpaces = R.replace(/\s\s+/g, ' ')
-
 const replicateStream = (origin$, proxy$) => origin$.subscribe(proxy$.asObserver())
 
 const getActivePage = state => R.prop(state.activeRoute, state.pages)
@@ -91,7 +89,6 @@ export default {
   isSuccessfulHttpResponse,
   slash,
   lenses,
-  removeMultipleSpaces,
   replicateStream,
   getActivePage,
   makePageType$,

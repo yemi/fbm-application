@@ -1,7 +1,8 @@
-/** @jsx hJSX */
-import {hJSX} from '@cycle/dom'
+import {h} from '@cycle/dom'
 import R from 'ramda'
 import U from '../../utils'
+
+const {footer, button, div, a, span} = require("hyperscript-helpers")(h)
 
 const getUrlToStep = (targetStepIndex, props) => {
   const maxStepIndex = props.totalSteps - 1
@@ -17,26 +18,28 @@ const getUrlToStep = (targetStepIndex, props) => {
 }
 
 const renderPostErrors = ({postErrors}) =>
-  <div className="mb20">
-    Oops! Something went wrong with the information you entered. <a href="#">Please take care of it now.</a>
-  </div>
+  div('.mb20', [
+    span('Oops! Something went wrong with the information you entered.'),
+    a({ href: '#' }, 'Please take care of it now.')
+  ]
+)
 
 const renderStepIndicator = props => {
   const activeStep = props.activeStep + 1
   return (
-    <span className="h5 medium colorSubdue mh20">
-      {activeStep} of {props.totalSteps}
-    </span>
+    span('.h5.medium.colorSubdue.mh20',
+      `${activeStep} of ${props.totalSteps}`
+    )
   )
 }
 
-const renderDisabledButton = text => <span className="button button--disabled">{text}</span>
+const renderDisabledButton = text => span('.button.button--disabled', text)
 
-const renderLinkButton = (text, url, extraClasses = '') => <a href={url} className={`button ${extraClasses}`}>{text}</a>
+const renderLinkButton = (text, url, extraClasses = '') => a(`.button${extraClasses}`, { href: url }, text)
 
 const renderPrevButton = props => {
   const prevStepUrl = getUrlToStep(props.activeStep - 1, props)
-  return props.activeStep === 0 ? null : renderLinkButton('Back', prevStepUrl, 'button--secondary')
+  return props.activeStep === 0 ? null : renderLinkButton('Back', prevStepUrl, '.button--secondary')
 }
 
 const renderNextStepButton = props => {
@@ -47,10 +50,10 @@ const renderNextStepButton = props => {
 }
 
 const renderSubmitButton = props => {
-  const buttonText = props.loading ? 'Loading...' : 'Submit application'
-  return props.canContinue
-    ? <button id="submit" className="button">{buttonText}</button>
-    : renderDisabledButton('Submit application')
+  const buttonText = props.isLoading ? 'Loading...' : 'Submit application'
+  return props.canContinue && R.not(props.isLoading)
+    ? button('#submit.button', buttonText)
+    : renderDisabledButton(buttonText)
 }
 
 const activeStepIsLastStep = props => props.activeStep === props.totalSteps - 1
@@ -66,12 +69,12 @@ const view = R.map(props => {
   const prevButton = renderPrevButton(props)
   const nextButton = renderNextButton(props)
   return (
-    <footer className="textCenter bgWhite pv20">
-      {postErrors}
-      {prevButton}
-      {stepIndicator}
-      {nextButton}
-    </footer>
+    footer('.textCenter.bgWhite.pv20', [
+      postErrors,
+      prevButton,
+      stepIndicator,
+      nextButton
+    ])
   )
 })
 

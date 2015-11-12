@@ -1,4 +1,4 @@
-import {Rx} from '@cycle/core'
+import Rx from 'rx'
 import {mockDOMResponse} from '@cycle/dom'
 import test from 'tape'
 import FormField from './index'
@@ -20,14 +20,14 @@ test('FormField type', assert => {
 
 test('FormField input', assert => {
   const props$ = Rx.Observable.just(textField)
-  const name = 'company-name'
+  const name = textField.id
   const DOMResponse = mockDOMResponse({
-    '#company-name input': {
-      // 'input': Rx.Observable.just({target: {value: 'Gregory Isaacs'}}),
+    '#company-name input[type="text"]': {
+      'input': Rx.Observable.just({target: {value: 'Gregory Isaacs'}}),
       'change': Rx.Observable.just({target: {}})
     }
   })
-  // DOMResponse.select(`#${name} input`).events('input').subscribe(console.log)
+  DOMResponse.select(`#${name} input[type="text"]`).events('input').subscribe(console.log)
   const {edit$, DOM} = FormField({DOM: DOMResponse, props$}, name)
   edit$.first().subscribe(console.log)
   DOM.first().subscribe(formField => {

@@ -1,11 +1,10 @@
-import {run, Rx} from '@cycle/core'
 import R from 'ramda'
 import H from '../helpers'
 import U from '../utils'
 import {DEFAULT_ROUTE} from '../config'
 
 const defaultState = {
-  loading: true,
+  isLoading: true,
   activeStep: 0,
   activeRoute: '',
   canContinue: false,
@@ -15,7 +14,7 @@ const defaultState = {
   isSubmitted: false
 }
 
-const makeUpdate$ = sources => {
+const makeUpdate$ = ({actions, httpGetResponse$, httpPostResponse$, History, LocalStorage}) => {
 
   // -- updateField :: FormField -> State -> State
   const updateField = ({value, fieldIndex, fieldGroupIndex, errorMessage}) => state => {
@@ -55,13 +54,13 @@ const makeUpdate$ = sources => {
   // -- onFormFieldEdit$ :: Observable (State -> State)
   const onFormFieldEdit$ = R.map(formField =>
     R.compose(updateCanContinue, updateFieldsErrors(formField), updateField(formField))
-  , sources.actions.formFieldEdit$)
+  , actions.formFieldEdit$)
 
   // -- nonEmptyLocalStorage$ :: Observable SourceData
-  const nonEmptyLocalStorage$ = R.filter(R.has('pages'), sources.LocalStorage)
+  const nonEmptyLocalStorage$ = R.filter(R.has('pages'), LocalStorage)
 
   // -- SourceData$ :: Observable SourceData
-  const sourceData$ = H.head(H.merge(sources.httpGetResponse$, nonEmptyLocalStorage$))
+  const sourceData$ = H.head(H.merge(httpGetResponse$, nonEmptyLocalStorage$))
 
   // -- setInitState$ :: Observable (State -> State)
   const setInitState$ = R.map(sourceData => state => {
@@ -88,21 +87,21 @@ const makeUpdate$ = sources => {
   // -- onRouteChange$ :: Observable (State -> State)
   const onRouteChange$ = R.map(location => 
     R.compose(R.ifElse(activePageIsStep, updateCanContinue, R.identity), handleRoute(location))
-  , sources.History)
+  , History)
 
   // -- onSubmit$ :: Observable (State -> State)
   const onSubmit$ = R.map(() => state => {
-    const newState = { ...state, loading: true, postErrors: [] }
+    const newState = { ...state, isLoading: true, postErrors: [] }
     return newState 
-  }, sources.actions.submit$)
+  }, actions.submit$)
 
   // -- onGetHttpPostResponse$ :: Observable (State -> State)
   const onGetHttpPostResponse$ = R.map(res => state => {
     //TODO: Handle error responses from server
     const pages = R.merge(state.pages, res.body)
-    const newState = { ...state, pages, isSubmitted: true, loading: false }
+    const newState = { ...state, pages, isSubmitted: true, isLoading: false }
     return newState
-  }, sources.httpPostResponse$)
+  }, httpPostResponse$)
 
   // -- setInitStateAndStep :: (State -> State) -> (State -> State) -> State -> State
   const setInitStateAndStep = (setInitState, onRouteChange) => R.compose(onRouteChange, setInitState)

@@ -1,12 +1,13 @@
-/** @jsx hJSX */
-import {hJSX} from '@cycle/dom'
+import {h} from '@cycle/dom'
 import R from 'ramda'
 
+const {div, h2} = require("hyperscript-helpers")(h)
+
 const view = R.map(props =>
-  <div>
-    <h2 className="mega textCenter tr1">{props.title}</h2>
-    <div className="h3 thin textCenter tr2">{props.subtitle}</div>
-  </div>
+  div([
+    h2('.mega.textCenter.tr1', props.title),
+    div('.h3.thin.textCenter.tr2', props.subtitle)
+  ])
 )
 
 export default view

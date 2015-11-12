@@ -1,4 +1,3 @@
-import {Rx} from '@cycle/core'
 import H from './helpers'
 
 const makeLocalStorageDriver = key => payload$ => {

@@ -1,4 +1,4 @@
-import {Rx} from '@cycle/core'
+import Rx from 'rx'
 import R from 'ramda'
 import intent from './intent'
 import view from './view'
@@ -23,12 +23,12 @@ const main = ({DOM, HTTP, LocalStorage, History}) => {
 
   const actions = intent(DOM, formPage)
   const state$ = model({actions, httpGetResponse$, httpPostResponse$, History, LocalStorage}).shareReplay(1)
+
   const pageVTree$ = merge(formPage.DOM, genericPage.DOM)
   const vTree$ = view(History, footer.DOM, pageVTree$)
 
   const getPostStateRequestObject = (_, state) => makePostStateRequestObject(state)
-  const safeSubmit$ = actions.submit$.debounce(1000)
-  const postStateRequest$ = withLatestFrom(getPostStateRequestObject, safeSubmit$, state$)
+  const postStateRequest$ = withLatestFrom(getPostStateRequestObject, actions.submit$, state$)
   const request$ = makeHttpRequest$(postStateRequest$)
 
   const makeSuccessUrl$ = R.compose(R.map(res => `/application-sent`), R.filter(isSuccessfulHttpResponse))

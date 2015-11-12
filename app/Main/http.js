@@ -1,4 +1,3 @@
-import {Rx} from '@cycle/core'
 import R from 'ramda'
 import {API_URL} from '../config'
 import {log, log_, makeRequestObject} from '../utils'

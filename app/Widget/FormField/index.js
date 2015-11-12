@@ -1,5 +1,4 @@
 /** @jsx hJSX */
-import {Rx} from '@cycle/core'
 import view from './view'
 import model from './model'
 import intent from './intent'
