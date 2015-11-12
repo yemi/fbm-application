@@ -32,7 +32,7 @@ const renderStepIndicator = props => {
 
 const renderDisabledButton = text => <span className="button button--disabled">{text}</span>
 
-const renderLinkButton = (text, url, extraClasses) => <a href={url} className={`button ${extraClasses}`}>{text}</a>
+const renderLinkButton = (text, url, extraClasses = '') => <a href={url} className={`button ${extraClasses}`}>{text}</a>
 
 const renderPrevButton = props => {
   const prevStepUrl = getUrlToStep(props.activeStep - 1, props)
@@ -46,10 +46,12 @@ const renderNextStepButton = props => {
     : renderDisabledButton('Continue')
 }
 
-const renderSubmitButton = props => 
-  props.canContinue
-    ? <button id="submit" className="button">Submit application</button>
+const renderSubmitButton = props => {
+  const buttonText = props.loading ? 'Loading...' : 'Submit application'
+  return props.canContinue
+    ? <button id="submit" className="button">{buttonText}</button>
     : renderDisabledButton('Submit application')
+}
 
 const activeStepIsLastStep = props => props.activeStep === props.totalSteps - 1
 

@@ -7,7 +7,6 @@ import H from '../../helpers'
 import {log} from '../../utils'
 
 const formField = ({DOM, props$}, name = '') => {
-  console.log('initialised', name)
   const actions = intent(DOM, name)
   const state$ = model(props$, actions).shareReplay(1)
   const vtree$ = view(state$, actions.focus$, name)

@@ -30,5 +30,5 @@ export default {
 
   skip: R.curry((num, observable) => observable.skip(1)),
 
-  withLatestFrom: (f, observableA, observableB) => observableA.withLatestFrom(observableB, f)
+  withLatestFrom: R.curry((f, observableA, observableB) => observableA.withLatestFrom(observableB, f))
 }
