@@ -1,7 +1,7 @@
 import R from 'ramda'
 import {API_URL} from '../config'
-import {log, log_, makeRequestObject} from '../utils'
-import {mergeAll, merge, retry, rxJust} from '../helpers'
+import {log, makeRequestObject} from '../utils'
+import H from '../helpers'
 
 // Helpers
 
@@ -11,39 +11,36 @@ const isRequestMethod = method => R.compose(R.propEq('method', method), R.prop('
 
 const requestFilter = method => R.both(isRequestUrlPath('application'), isRequestMethod(method))
 
-
 // Fetch data response (GET)
 
 const getHttpGetResponse$ = R.compose(
   R.map(R.prop('body')),
   R.filter(R.has('body')),
-  retry(3),
-  mergeAll,
+  H.retry(3),
+  H.mergeAll,
   R.filter(requestFilter('GET'))
 )
-
 
 // Post state response (POST)
 
 const getHttpPostResponse$ = R.compose(
   R.map(log),
-  retry(3),
-  mergeAll,
+  H.retry(3),
+  H.mergeAll,
   R.filter(requestFilter('POST'))
 )
 
-
 // Http requests
 
-const initialApplicationRequest$ = R.map(makeRequestObject('GET', null), rxJust(`${API_URL}/application`))
+const initialApplicationRequest$ = R.map(makeRequestObject('GET', null), H.rxJust(`${API_URL}/application`))
 
 const makeHttpRequest$ = (...otherRequest$) =>
-  merge(
+  H.merge(
     initialApplicationRequest$,
     ...otherRequest$
   )
 
-export default {
+export {
   getHttpGetResponse$,
   getHttpPostResponse$,
   makeHttpRequest$

@@ -79,8 +79,7 @@ const events = (selector, events) => H.merge(
   R.map(event => selector.events(event), events)
 )
 
-
-export default {
+module.exports = {
   log,
   log_,
   makeRequestObject,

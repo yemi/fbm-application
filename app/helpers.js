@@ -1,34 +1,50 @@
-import Rx from 'rx' 
 import R from 'ramda'
+import Rx from 'rx' 
 
-export default {
-  combineLatest: Rx.Observable.combineLatest,
+const combineLatest = Rx.Observable.combineLatest
 
-  concat: R.curry((m, n) => m instanceof Rx.Observable ? m.concat(n) : R.concat(m, n)),
+const concat = R.curry((m, n) => m.concat(n))
 
-  flatMapLatest: R.curry((f, m) => m.flatMapLatest(f)),
+const flatMapLatest = R.curry((f, m) => m.flatMapLatest(f))
 
-  fromEvent: (event, selector) => Rx.Observable.fromEvent(selector, event),
+const fromEvent = (event, selector) => Rx.Observable.fromEvent(selector, event)
 
-  head: m => m instanceof Rx.Observable ? m.first() : R.head(m),
+const head = m => m.first()
 
-  mapIndexed: R.curry((f, m) => m.map(f)),
+const mapIndexed = R.curry((f, m) => m.map(f))
 
-  merge: (m, ...n) => m instanceof Rx.Observable || m instanceof Array ? Rx.Observable.merge(m, ...n) : R.merge(m, n[0]),
+const merge = (m, ...n) => Rx.Observable.merge(m, ...n)
 
-  mergeAll: m => m instanceof Rx.Observable ? m.mergeAll() : R.mergeAll(m),
+const mergeAll = m => m.mergeAll()
 
-  retry: num => observable => observable.retry(num),
+const retry = R.curry((num, observable) => observable.retry(num))
 
-  rxJust: a => Rx.Observable.just(a),
+const rxJust = a => Rx.Observable.just(a)
   
-  sample: R.curry((a, b) => a.sample(b)),
+const sample = R.curry((a, b) => a.sample(b))
 
-  scan: R.curry((f, a, m) => m instanceof Rx.Observable ? m.scan(f, a) : R.scan(f, a, m)),
+const scan = R.curry((f, a, m) => m.scan(f, a))
 
-  shareReplay: num => observable => observable.shareReplay(1),
+const shareReplay = R.curry((num, observable) => observable.shareReplay(num))
 
-  skip: R.curry((num, observable) => observable.skip(1)),
+const skip = R.curry((num, observable) => observable.skip(num))
 
-  withLatestFrom: R.curry((f, observableA, observableB) => observableA.withLatestFrom(observableB, f))
+const withLatestFrom = R.curry((f, observableA, observableB) => observableA.withLatestFrom(observableB, f))
+
+module.exports = {
+  combineLatest,
+  concat,
+  flatMapLatest,
+  fromEvent,
+  head,
+  mapIndexed,
+  merge,
+  mergeAll,
+  retry,
+  rxJust,
+  sample,
+  scan,
+  shareReplay,
+  skip,
+  withLatestFrom
 }

@@ -7,4 +7,4 @@ const makeLocalStorageDriver = key => payload$ => {
   return H.rxJust(JSON.parse(localStorage.getItem(key)) || {})
 }
 
-export default {makeLocalStorageDriver}
+export {makeLocalStorageDriver}

@@ -13,23 +13,19 @@ const renderInputOptionToggle = state =>
     ])
   ])
 
-const renderInputOption = state => option => {
-  console.log(option)
-  return (
-    div('.formField-listOption', [
-      input(`#${option.value}.input--${state.type}.hide`, {
-        type: state.type,
-        value: option.value,
-        name: state.id,
-        checked: state.value === option.value
-      }),
-      label({ htmlFor: option.value }, [
-        renderInputOptionToggle(state),
-        option.label
-      ]),
-    ])
-  )
-}
+const renderInputOption = state => option => 
+  div('.formField-listOption', [
+    input(`#${option.value}.input--${state.type}.hide`, {
+      type: state.type,
+      value: option.value,
+      name: state.id,
+      checked: state.value === option.value
+    }),
+    label({ htmlFor: option.value }, [
+      renderInputOptionToggle(state),
+      option.label
+    ]),
+  ])
 
 const renderSelectInputOption = state => option =>
   h('option', { value: option.value, selected: state.value === option.value }, option.label)

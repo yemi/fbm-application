@@ -4,11 +4,9 @@ import test from 'tape'
 import FormField from './index'
 
 const textField = {
-  "label": "Company name",
   "id": "company-name",
   "type": "text",
-  "required": true,
-  "helpText": "This should be the brand name of your business, not its official or legal name. Think \"Google\" rather than \"Google Ltd\" or \"Google.com\""
+  "required": true
 }
 
 test('FormField type', assert => {
@@ -18,22 +16,22 @@ test('FormField type', assert => {
   assert.end()
 })
 
-test('FormField input', assert => {
+test('FormField text edit', assert => {
+  const expected = 'Gregory isaacs'
   const props$ = Rx.Observable.just(textField)
   const name = textField.id
+  const selector = name + ' input[type="text"]'
   const DOMResponse = mockDOMResponse({
-    '#company-name input[type="text"]': {
-      'input': Rx.Observable.just({target: {value: 'Gregory Isaacs'}}),
-      'change': Rx.Observable.just({target: {}})
+    [`#${name} input[type="text"]`]: {
+      'input': Rx.Observable.just({ target: { value: expected }}),
+      'change': Rx.Observable.just(null)
     }
   })
-  DOMResponse.select(`#${name} input[type="text"]`).events('input').subscribe(console.log)
   const {edit$, DOM} = FormField({DOM: DOMResponse, props$}, name)
-  edit$.first().subscribe(console.log)
-  DOM.first().subscribe(formField => {
-    const actual = formField.value
-    const expected = 'Gregory Isaacs'
-    assert.equal(actual, expected, 'FormField edit should return an object containing the changed value')
+  edit$.first().subscribe(formField => {
+    const actual = formField.valuee
+    assert.equal(actual, expected, 'FormField should return a stream of objects containing input values')
     assert.end()
   })
 })
+
