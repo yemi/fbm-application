@@ -25,7 +25,7 @@ const makeUpdate$ = ({actions, httpGetResponse$, httpPostResponse$, History, Loc
   }
 
   // -- onFormPageEdit$ :: Observable (State -> State)
-  const onFormPageEdit$ = R.map(formField =>
+  const onFormPageEdit$ = R.map(formPage =>
     R.compose(updateCanContinue, updateFieldsErrors(formField), updateField(formField))
   , actions.formPageEdit$)
 
