@@ -12,7 +12,7 @@ import Footer from '../Component/Footer'
 
 const FormPageWrapper = ({DOM, state$}) => {
   const props$ = makePageType$('step', state$)
-  return FormPage({DOM, props$})
+  return log(FormPage({DOM, props$}))
 }
 
 const GenericPageWrapper = ({state$}) => {

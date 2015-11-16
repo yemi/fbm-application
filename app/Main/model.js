@@ -17,17 +17,19 @@ const defaultState = {
 const makeUpdate$ = ({actions, httpGetResponse$, httpPostResponse$, History, LocalStorage}) => {
 
   // -- updateCanContinue :: State -> State
-  const updateCanContinue = state => {
-    const activePage = R.prop(state.activeRoute, state.pages)
-    const canContinue = R.isEmpty(state.fieldsErrors) && allRequiredFieldsHaveValue(activePage)
-    const newState = { ...state, canContinue }
-    return newState
-  }
+// const updateCanContinue = state => {
+//   const activePage = R.prop(state.activeRoute, state.pages)
+//const canContinue = R.isEmpty(state.fieldsErrors) && allRequiredFieldsHaveValue(activePage)
+//const newState = { ...state, canContinue }
+//   return newState
+// }
 
-  // -- onFormPageEdit$ :: Observable (State -> State)
-  const onFormPageEdit$ = R.map(formPage =>
-    R.compose(updateCanContinue, updateFieldsErrors(formField), updateField(formField))
-  , actions.formPageEdit$)
+  // -- onPageEdit$ :: Observable (State -> State)
+  const onPageEdit$ = R.map(page => state => {
+    const pages = R.assoc(state.activeRoute, page, state.pages)
+    const newState = { ...state, pages  }
+    return newState
+  }, actions.pageEdit$)
 
   // -- nonEmptyLocalStorage$ :: Observable SourceData
   const nonEmptyLocalStorage$ = R.filter(R.has('pages'), LocalStorage)
@@ -41,16 +43,15 @@ const makeUpdate$ = ({actions, httpGetResponse$, httpPostResponse$, History, Loc
     return newState
   }, sourceData$)
 
-
-  // -- handleRoute :: Location -> State -> State
-  const handleRoute = location => state => {
+  // -- handleRoute$ :: Observable (State -> State)
+  const handleRoute$ = R.map(location => state => {
     const route = location.pathname === '/' ? DEFAULT_ROUTE : location.pathname
     const activeRoute = R.replace('/', '', route)
     const activePage = R.prop(activeRoute, state.pages)
     const activeStep = activePage.type === 'step' ? activePage.index : state.activeStep
-    const newState = { ...state, activeStep, activeRoute, fieldsErrors: {} }
+    const newState = { ...state, activeStep, activeRoute }
     return newState
-  }
+  }, History)
 
   // -- activePageIsStep :: State -> Bool
   const activePageIsStep = state => {
@@ -59,9 +60,7 @@ const makeUpdate$ = ({actions, httpGetResponse$, httpPostResponse$, History, Loc
   }
 
   // -- onRouteChange$ :: Observable (State -> State)
-  const onRouteChange$ = R.map(location => 
-    R.compose(R.ifElse(activePageIsStep, updateCanContinue, R.identity), handleRoute(location))
-  , History)
+//const onRouteChange$ = R.map(location => handleRoute(location) , History)
 
   // -- onSubmit$ :: Observable (State -> State)
   const onSubmit$ = R.map(() => state => {
@@ -81,11 +80,11 @@ const makeUpdate$ = ({actions, httpGetResponse$, httpPostResponse$, History, Loc
   const setInitStateAndStep = (setInitState, onRouteChange) => R.compose(onRouteChange, setInitState)
   
   // -- initApp$ :: Observable (State -> State)
-  const initApp$ = H.head(H.withLatestFrom(setInitStateAndStep, setInitState$, onRouteChange$))
+  const initApp$ = H.head(H.withLatestFrom(setInitStateAndStep, setInitState$, handleRoute$))
 
   return H.merge(
-    H.concat(initApp$, onRouteChange$),
-    onFormFieldEdit$,
+    H.concat(initApp$, handleRoute$),
+    onPageEdit$,
     onSubmit$,
     onGetHttpPostResponse$
   )

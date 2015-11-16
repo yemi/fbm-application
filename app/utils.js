@@ -44,23 +44,13 @@ const mergeStateWithSourceData = (state, sourceData) => {
   return newState
 }
 
-const makeFieldGroupsLens = route =>
-  R.compose(
-    R.lensProp('pages'),
-    R.lensProp(route),
-    R.lensProp('fieldGroups')
-  )
-
-const makeFieldsLens = (route, fieldGroupIndex) =>
-  R.compose(
-    makeFieldGroupsLens(route),
-    R.lensIndex(fieldGroupIndex),
-    R.lensProp('fields')
-  )
-
 const lenses = {
-  fieldGroups: route => makeFieldGroupsLens(route),
-  fields: (route, fieldGroupIndex) => makeFieldsLens(route, fieldGroupIndex)
+  fields: fieldGroupIndex =>
+    R.compose(
+      R.lensProp('fieldGroups'),
+      R.lensIndex(fieldGroupIndex),
+      R.lensProp('fields')
+    )
 }
 
 const replicateStream = (origin$, proxy$) => origin$.subscribe(proxy$.asObserver())
@@ -73,10 +63,6 @@ const makePageType$ = (type, state$) => {
   return R.filter(pageTypeFilter, activePage$)
 }
 
-const events = (selector, events) => H.merge(
-  R.map(event => selector.events(event), events)
-)
-
 module.exports = {
   log,
   log_,
@@ -87,6 +73,5 @@ module.exports = {
   lenses,
   replicateStream,
   getActivePage,
-  makePageType$,
-  events
+  makePageType$
 }

@@ -3,7 +3,7 @@ import R from 'ramda'
 import {rxJust} from '../helpers'
 
 const intent = (DOM, formPage) => ({
-  formFieldEdit$: formPage.formFieldEdit$,
+  pageEdit$: formPage.edit$,
 
   url$: R.map(R.path(['target', 'pathname']), R.filter(filterLinks, DOM.select('a').events('click'))),
 

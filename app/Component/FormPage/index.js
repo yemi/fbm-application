@@ -2,6 +2,7 @@ import R from 'ramda'
 import H from '../../helpers'
 import U from '../../utils'
 import view from './view'
+import updatePage from './updatePage'
 import FormField from '../../Widget/FormField'
 
 const amendPropsWithChildren = DOM => props => {
@@ -34,15 +35,11 @@ const makeFormFieldAction$ = (actionKey, amendedProps$) => {
 }
 
 const main = ({DOM, props$}) => {
-  const proxyFormFieldEdit$ = new Rx.ReplaySubject(1)
   const amendedProps$ = R.map(amendPropsWithChildren(DOM), props$).shareReplay(1)
-  const state$ = model(amendedProps$, proxyFormFieldEdit$)
-  const vTree$ = view(state$)
   const formFieldEdit$ = makeFormFieldAction$('edit$', amendedProps$)
-  replicateStream(formFieldEdit$, proxyFormFieldEdit$)
   return {
-    DOM: vTree$,
-    page$: state$
+    DOM: view(amendedProps$),
+    edit$: H.withLatestFrom(updatePage, formFieldEdit$, props$)
   }
 }
 
