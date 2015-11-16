@@ -34,17 +34,15 @@ const makeFormFieldAction$ = (actionKey, amendedProps$) => {
 }
 
 const main = ({DOM, props$}) => {
+  const proxyFormFieldEdit$ = new Rx.ReplaySubject(1)
   const amendedProps$ = R.map(amendPropsWithChildren(DOM), props$).shareReplay(1)
-  const formFieldEditProxy$ = new Rx.ReplaySubject(1)
-  const actions = intent({DOM, formFieldEditProxy$})
-  const state$ = model(amendedProps$, actions)
+  const state$ = model(amendedProps$, proxyFormFieldEdit$)
   const vTree$ = view(state$)
   const formFieldEdit$ = makeFormFieldAction$('edit$', amendedProps$)
-  replicateStream(formFieldEdit$, formFieldEditProxy$)
+  replicateStream(formFieldEdit$, proxyFormFieldEdit$)
   return {
     DOM: vTree$,
-    fields$,
-    errors$
+    page$: state$
   }
 }
 

@@ -16,33 +16,6 @@ const defaultState = {
 
 const makeUpdate$ = ({actions, httpGetResponse$, httpPostResponse$, History, LocalStorage}) => {
 
-  // -- updateField :: FormField -> State -> State
-  const updateField = ({value, fieldIndex, fieldGroupIndex, errorMessage}) => state => {
-    const fieldsLens = U.lenses.fields(state.activeRoute, fieldGroupIndex)
-    const fields = R.view(fieldsLens, state)
-    const updateField = field => ({ ...field, value, errorMessage })
-    const updatedFields = R.adjust(updateField, fieldIndex, fields)
-    const newState = R.set(fieldsLens, updatedFields, state)
-    return newState
-  }
-
-  // -- updateFieldsErrors :: FormField -> State -> State
-  const updateFieldsErrors = ({errorMessage, id}) => state => {
-    const fieldsErrors = errorMessage 
-      ? R.assoc(id, errorMessage, state.fieldsErrors)
-      : R.dissoc(id, state.fieldsErrors)
-    const newState = { ...state, fieldsErrors }
-    return newState
-  }
-
-  // -- allRequiredFieldsHaveValue :: Page -> Bool
-  const allRequiredFieldsHaveValue = page => {
-    const isFieldValid = field => (field.required && field.value) || R.not(field.required)
-    const isFieldGroupValid = R.compose(R.all(isFieldValid), R.prop('fields'))
-    const areFieldGroupsValid = R.compose(R.all(R.identity), R.flatten, R.map(isFieldGroupValid))
-    return areFieldGroupsValid(page.fieldGroups)
-  }
-
   // -- updateCanContinue :: State -> State
   const updateCanContinue = state => {
     const activePage = R.prop(state.activeRoute, state.pages)
@@ -51,10 +24,10 @@ const makeUpdate$ = ({actions, httpGetResponse$, httpPostResponse$, History, Loc
     return newState
   }
 
-  // -- onFormFieldEdit$ :: Observable (State -> State)
-  const onFormFieldEdit$ = R.map(formField =>
+  // -- onFormPageEdit$ :: Observable (State -> State)
+  const onFormPageEdit$ = R.map(formField =>
     R.compose(updateCanContinue, updateFieldsErrors(formField), updateField(formField))
-  , actions.formFieldEdit$)
+  , actions.formPageEdit$)
 
   // -- nonEmptyLocalStorage$ :: Observable SourceData
   const nonEmptyLocalStorage$ = R.filter(R.has('pages'), LocalStorage)

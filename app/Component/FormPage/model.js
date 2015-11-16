@@ -2,25 +2,25 @@ import R from 'ramda'
 import H from '../helpers'
 import U from '../utils'
 
-const model = (props$, actions) => {
+const model = (props$, formFieldEdit$) => {
 
-  // -- updateField :: FormField -> State -> State
-  const updateField = ({value, fieldIndex, fieldGroupIndex, errorMessage}) => state => {
-    const fieldsLens = U.lenses.fields(state.activeRoute, fieldGroupIndex)
-    const fields = R.view(fieldsLens, state)
+  // -- updateField :: FormField -> Props -> Props
+  const updateField = ({value, fieldIndex, fieldGroupIndex, errorMessage}) => props => {
+    const fieldsLens = U.lenses.fields(props.activeRoute, fieldGroupIndex)
+    const fields = R.view(fieldsLens, props)
     const updateField = field => ({ ...field, value, errorMessage })
     const updatedFields = R.adjust(updateField, fieldIndex, fields)
-    const newState = R.set(fieldsLens, updatedFields, state)
-    return newState
+    const newProps = R.set(fieldsLens, updatedFields, props)
+    return newProps
   }
 
-  // -- updateFieldsErrors :: FormField -> State -> State
-  const updateFieldsErrors = ({errorMessage, id}) => state => {
+  // -- updateFieldsErrors :: FormField -> Props -> Props
+  const updateFieldsErrors = ({errorMessage, id}) => props => {
     const fieldsErrors = errorMessage 
-      ? R.assoc(id, errorMessage, state.fieldsErrors)
-      : R.dissoc(id, state.fieldsErrors)
-    const newState = { ...state, fieldsErrors }
-    return newState
+      ? R.assoc(id, errorMessage, props.fieldsErrors)
+      : R.dissoc(id, props.fieldsErrors)
+    const newProps = { ...props, fieldsErrors }
+    return newProps
   }
 
   // -- allRequiredFieldsHaveValue :: Page -> Bool
@@ -31,11 +31,13 @@ const model = (props$, actions) => {
     return areFieldGroupsValid(page.fieldGroups)
   }
 
-  // -- onFormFieldEdit$ :: Observable (State -> State)
-  const onFormFieldEdit$ = R.map(formField =>
-    R.compose(updateCanContinue, updateFieldsErrors(formField), updateField(formField))
-  , actions.formFieldEdit$)
+  // -- amendedProps$ :: Observable Props
+  const amendedProps$ = U.combineLatest(props$, formFieldEdit$, (props, formField) => {
+    const newProps = R.compose(updateFieldsErrors(formField), updateField(formField))(props)
+    return newProps
+  })
 
+  return H.concat(props$, amendedProps$)
 }
 
 export default model
