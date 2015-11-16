@@ -2,7 +2,7 @@ import R from 'ramda'
 import H from '../../helpers'
 import U from '../../utils'
 import view from './view'
-import formField from '../../Widget/FormField'
+import FormField from '../../Widget/FormField'
 
 const amendPropsWithChildren = DOM => props => {
   const fieldGroups = H.mapIndexed((fieldGroup, i) => ({
@@ -12,7 +12,7 @@ const amendPropsWithChildren = DOM => props => {
       const props$ = H.rxJust({ ...field, minRows, fieldGroupIndex: i, fieldIndex: y })
       return {
         ...field,
-        formField: formField({DOM, props$}, field.id)
+        formField: FormField({DOM, props$}, field.id)
       }
     }, fieldGroup.fields)
   }), props.fieldGroups)

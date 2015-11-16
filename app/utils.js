@@ -32,8 +32,6 @@ const makePostStateRequestObject = state => {
 
 const isSuccessfulHttpResponse = res => res.statusCode === 200
 
-const slash = path => `/${path}`
-
 const mergeStateWithSourceData = (state, sourceData) => {
   const newState = {
     ...state,
@@ -86,7 +84,6 @@ module.exports = {
   makePostStateRequestObject,
   mergeStateWithSourceData,
   isSuccessfulHttpResponse,
-  slash,
   lenses,
   replicateStream,
   getActivePage,

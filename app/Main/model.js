@@ -68,6 +68,7 @@ const makeUpdate$ = ({actions, httpGetResponse$, httpPostResponse$, History, Loc
     return newState
   }, sourceData$)
 
+
   // -- handleRoute :: Location -> State -> State
   const handleRoute = location => state => {
     const route = location.pathname === '/' ? DEFAULT_ROUTE : location.pathname

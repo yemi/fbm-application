@@ -14,7 +14,8 @@ const getUrlToStep = (targetStepIndex, props) => {
   const hasTargetStepIndex = R.compose(R.equals(safeStepIndex), R.prop('index'))
   const getStepPath = R.compose(R.head, R.keys, R.pickBy(R.both(isPageStep, hasTargetStepIndex)))
   const stepPath = getStepPath(props.pages)
-  return U.slash(stepPath)
+  const stepUrl = `/${stepPath}`
+  return stepUrl
 }
 
 const renderPostErrors = ({postErrors}) =>

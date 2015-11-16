@@ -10,12 +10,20 @@ import FormPage from '../Component/FormPage'
 import GenericPage from '../Component/GenericPage'
 import Footer from '../Component/Footer'
 
+const FormPageWrapper = ({DOM, state$}) => {
+  const props$ = makePageType$('step', state$)
+  return FormPage({DOM, props$})
+}
+
+const GenericPageWrapper = ({state$}) => {
+  const props$ = makePageType$('generic', state$)
+  return GenericPage({props$})
+}
+
 const main = ({DOM, HTTP, LocalStorage, History}) => {
   const proxyState$ = new Rx.ReplaySubject(1)
-  const formPage$ = makePageType$('step', proxyState$)
-  const formPage = FormPage({DOM, props$: formPage$})
-  const genericPage$ = makePageType$('generic', proxyState$)
-  const genericPage = GenericPage(genericPage$)
+  const formPage = FormPageWrapper({DOM, state$: proxyState$})
+  const genericPage = GenericPageWrapper({state$: proxyState$})
   const footer = Footer(proxyState$)
 
   const httpGetResponse$ = getHttpGetResponse$(HTTP)
@@ -27,8 +35,8 @@ const main = ({DOM, HTTP, LocalStorage, History}) => {
   const pageVTree$ = merge(formPage.DOM, genericPage.DOM)
   const vTree$ = view(History, footer.DOM, pageVTree$)
 
-  const getPostStateRequestObject = (_, state) => makePostStateRequestObject(state)
-  const postStateRequest$ = withLatestFrom(getPostStateRequestObject, actions.submit$, state$)
+  const postStateRequest$ = withLatestFrom((_, state) => 
+    makePostStateRequestObject(state), actions.submit$, state$)
   const request$ = makeHttpRequest$(postStateRequest$)
 
   const makeSuccessUrl$ = R.compose(R.map(res => `/application-sent`), R.filter(isSuccessfulHttpResponse))

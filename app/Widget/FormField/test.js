@@ -27,9 +27,9 @@ test('FormField text edit', assert => {
       'change': Rx.Observable.just(null)
     }
   })
-  const {edit$, DOM} = FormField({DOM: DOMResponse, props$}, name)
+  const {edit$} = FormField({DOM: DOMResponse, props$}, name)
   edit$.first().subscribe(formField => {
-    const actual = formField.valuee
+    const actual = formField.value
     assert.equal(actual, expected, 'FormField should return a stream of objects containing input values')
     assert.end()
   })

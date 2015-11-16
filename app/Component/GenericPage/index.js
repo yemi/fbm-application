@@ -2,7 +2,7 @@
 import {hJSX} from '@cycle/dom'
 import view from './view'
 
-const main = props$ => {
+const main = ({props$}) => {
   const vTree$ = view(props$)
   return {
     DOM: vTree$
