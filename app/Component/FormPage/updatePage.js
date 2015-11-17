@@ -1,5 +1,4 @@
 import R from 'ramda'
-import H from '../../helpers'
 import U from '../../utils'
 
 // -- updateField :: FormField -> Props -> Props

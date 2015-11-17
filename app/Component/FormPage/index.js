@@ -1,6 +1,5 @@
 import R from 'ramda'
 import H from '../../helpers'
-import U from '../../utils'
 import view from './view'
 import updatePage from './updatePage'
 import FormField from '../../Widget/FormField'
@@ -37,9 +36,11 @@ const makeFormFieldAction$ = (actionKey, amendedProps$) => {
 const main = ({DOM, props$}) => {
   const amendedProps$ = R.map(amendPropsWithChildren(DOM), props$).shareReplay(1)
   const formFieldEdit$ = makeFormFieldAction$('edit$', amendedProps$)
+  const vTree$ = view(amendedProps$)
+  const edit$ = H.withLatestFrom(updatePage, formFieldEdit$, props$)
   return {
-    DOM: view(amendedProps$),
-    edit$: H.withLatestFrom(updatePage, formFieldEdit$, props$)
+    DOM: vTree$,
+    edit$
   }
 }
 
