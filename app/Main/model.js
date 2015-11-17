@@ -10,19 +10,10 @@ const defaultState = {
   canContinue: false,
   pages: {},
   totalSteps: null,
-  fieldsErrors: {},
   isSubmitted: false
 }
 
 const makeUpdate$ = ({actions, httpGetResponse$, httpPostResponse$, History, LocalStorage}) => {
-
-  // -- updateCanContinue :: State -> State
-// const updateCanContinue = state => {
-//   const activePage = R.prop(state.activeRoute, state.pages)
-//const canContinue = R.isEmpty(state.fieldsErrors) && allRequiredFieldsHaveValue(activePage)
-//const newState = { ...state, canContinue }
-//   return newState
-// }
 
   // -- onPageEdit$ :: Observable (State -> State)
   const onPageEdit$ = R.map(page => state => {
@@ -58,9 +49,6 @@ const makeUpdate$ = ({actions, httpGetResponse$, httpPostResponse$, History, Loc
     const activePage = R.prop(state.activeRoute, state.pages)
     return activePage.type === 'step'
   }
-
-  // -- onRouteChange$ :: Observable (State -> State)
-//const onRouteChange$ = R.map(location => handleRoute(location) , History)
 
   // -- onSubmit$ :: Observable (State -> State)
   const onSubmit$ = R.map(() => state => {
