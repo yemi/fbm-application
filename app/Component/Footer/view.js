@@ -45,14 +45,16 @@ const renderPrevButton = props => {
 
 const renderNextStepButton = props => {
   const nextStepUrl = getUrlToStep(props.activeStep + 1, props)
-  return props.canContinue 
+  const activePage = U.getActivePage(props)
+  return activePage.isValid
     ? renderLinkButton('Continue', nextStepUrl) 
     : renderDisabledButton('Continue')
 }
 
 const renderSubmitButton = props => {
   const buttonText = props.isLoading ? 'Loading...' : 'Submit application'
-  return props.canContinue && R.not(props.isLoading)
+  const activePage = U.getActivePage(props)
+  return activePage.isValid && R.not(props.isLoading)
     ? button('#submit.button', buttonText)
     : renderDisabledButton(buttonText)
 }
