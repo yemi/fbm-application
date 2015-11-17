@@ -1,8 +1,8 @@
 import {h} from '@cycle/dom'
 import R from 'ramda'
 import H from '../../helpers'
-import U from '../../utils'
-import {SetRowsHook} from '../../hooks'
+import {calculateTextareaRows, renderSvg} from '../../utils'
+import {propHook} from '../../hooks'
 
 const {span, i, div, input, label, select, textarea} = require("hyperscript-helpers")(h)
 
@@ -33,9 +33,10 @@ const renderSelectInputOption = state => option =>
 const renderSelectInput = state => {
   const selectOptions = R.map(renderSelectInputOption(state), state.options)
   return (
-    div(
-      select({ name: state.id, id: state.id }, selectOptions)
-    )
+    div([
+      select({ name: state.id, id: state.id }, selectOptions),
+      renderSvg('icon-arrow-down', { class: 'icon icon--arrow-down', width: 11, height: 7 })
+    ])
   )
 }
 
@@ -45,7 +46,11 @@ const renderInputWithOptions = state =>
     : R.map(renderInputOption(state), state.options)
 
 const renderTextarea = ({type, value, id, minRows}) =>
-  textarea('.input', { value: value || '', cols: "40" })
+  textarea('.input', { 
+    value: value || '', 
+    cols: 40,
+    rows: 5,
+  })
 
 const renderGenericInput = ({type, value, id}) =>
   input('.input', { type: type, value: value || '' })
@@ -54,7 +59,15 @@ const renderInput = state =>
   state.type === 'textarea' ? renderTextarea(state) : renderGenericInput(state)
 
 const renderHelpTextToggle = state =>
-  i('.formField-help.icon.icon--help', { 'data-tooltip': state.helpText }, '?')
+  renderSvg('icon-circle-question-mark', { 
+    class: 'formField-help icon icon--help', 
+    hook: propHook(() => {
+      console.log('fix tooltips')
+    }),
+    attributes: { 
+      'data-tooltip': state.helpText 
+    } 
+  })
 
 const getFormFieldClasses = ({type, value, errorMessage}, focus) => {
   const formFieldType = type === 'text' ? 'input' : type

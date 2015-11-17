@@ -1,6 +1,7 @@
+import {svg} from '@cycle/dom'
 import R from 'ramda'
 import H from './helpers'
-import {API_URL} from './config'
+import {API_URL, SVG_ROOT} from './config'
 
 const log = a => {
   console.log(a);
@@ -63,6 +64,23 @@ const makePageType$ = (type, state$) => {
   return R.filter(pageTypeFilter, activePage$)
 }
 
+const renderSvg = (name, options) =>
+  svg('svg', options,
+    svg('use', { 'xlink:href': `${SVG_ROOT}#${name}` }))
+
+const calculateTextareaRows = textarea => {
+  const lineHeight = 28.5
+  const minHeight = 53
+  const getRows = R.compose(
+    Math.ceil,
+    R.flip(R.divide)(lineHeight),
+    R.flip(R.subtract)(minHeight),
+    R.prop('scrollHeight')
+  )
+  const rows = getRows(textarea)
+  return rows
+}
+
 module.exports = {
   log,
   log_,
@@ -73,5 +91,7 @@ module.exports = {
   lenses,
   replicateStream,
   getActivePage,
-  makePageType$
+  makePageType$,
+  renderSvg,
+  calculateTextareaRows 
 }

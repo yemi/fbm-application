@@ -44,12 +44,6 @@ const makeUpdate$ = ({actions, httpGetResponse$, httpPostResponse$, History, Loc
     return newState
   }, History)
 
-  // -- activePageIsStep :: State -> Bool
-  const activePageIsStep = state => {
-    const activePage = R.prop(state.activeRoute, state.pages)
-    return activePage.type === 'step'
-  }
-
   // -- onSubmit$ :: Observable (State -> State)
   const onSubmit$ = R.map(() => state => {
     const newState = { ...state, isLoading: true, postErrors: [] }
